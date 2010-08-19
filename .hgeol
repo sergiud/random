@@ -1,0 +1,19 @@
+[patterns]
+**.*.in = native
+**.c = native
+**.cpp = native
+**.h = native
+**.hpp = native
+**.po = LF
+**.pot = LF
+**.pri = native
+**.pro = native
+**.py = native
+**.qrc = native
+**.rst = native
+**.ts = native
+**.txt = native
+**.ui = native
+.hgeol = native
+TODO = native
+
