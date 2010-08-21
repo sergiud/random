@@ -19,6 +19,7 @@
 #include <istream>
 #include <limits>
 #include <ostream>
+#include <stdexcept>
 
 #include <boost/cstdint.hpp>
 #include <boost/mpl/apply.hpp>
@@ -126,7 +127,7 @@ namespace Detail {
         }
     };
 
-    template<unsigned w, unsigned q, unsigned a, unsigned ds, unsigned dt>
+    template<std::size_t w, unsigned q, unsigned a, unsigned ds, unsigned dt>
     struct M6
     {
         template<class T>
@@ -154,13 +155,13 @@ namespace Detail {
                 boost::mpl::int_<0>
             > IsPowerOfTwo;  
 
-    template<unsigned r>
+    template<class UIntType, UIntType r>
     struct Power2Modulo
     {
         typedef typename 
             boost::mpl::apply<
                 IsPowerOfTwo, 
-                boost::mpl::integral_c<unsigned, r> 
+                boost::mpl::integral_c<UIntType, r> 
             >::type type;
 
         BOOST_STATIC_ASSERT(type::value);
@@ -172,23 +173,23 @@ namespace Detail {
         }
     };
 
-    template<unsigned N>
+    template<class UIntType, UIntType r>
     struct GenericModulo
     {
         /**
-         * Determines @a value modulo @a N.
+         * Determines @a value modulo @a r.
          * 
-         * @pre value >= 0 and value < 2 * N
-         * @post value >= 0 and value < N
+         * @pre value >= 0 and value < 2 * r
+         * @post value >= 0 and value < r
          */
         template<class T>
         static T calc(T value)
         {
             BOOST_STATIC_ASSERT(boost::is_unsigned<T>::value);
-            assert(value < 2 * N);
+            assert(value < 2 * r);
 
-            if (value >= N)
-                value -= N;
+            if (value >= r)
+                value -= r;
 
             return value;
         }
@@ -260,7 +261,7 @@ class Well
     typedef typename 
             boost::mpl::apply<
                 Detail::IsPowerOfTwo, 
-                boost::mpl::integral_c<std::size_t, r> 
+                boost::mpl::integral_c<UIntType, r> 
             >::type is_power_of_two;
 
     template<class T>
@@ -271,8 +272,8 @@ class Well
         // calculation.
         return boost::mpl::if_<
                     is_power_of_two,
-                        Detail::Power2Modulo<r>,
-                        Detail::GenericModulo<r>
+                        Detail::Power2Modulo<UIntType, r>,
+                        Detail::GenericModulo<UIntType, r>
                 >::type::calc(value);
     }
 
@@ -291,10 +292,12 @@ public:
 
     static const std::size_t word_size = w;
     static const std::size_t state_size = r;
+    static const std::size_t mask_bits = p;
+    static const result_type default_seed = 5489;
 
-    Well()
+    explicit Well(result_type value = default_seed)
     {
-        seed();
+        seed(value);
     }
 
     template<class ForwardIterator>
@@ -317,10 +320,26 @@ public:
         std::generate_n(state_, state_size, boost::ref(g));
     }
 
+    void seed(UIntType value)
+    {
+        if (value == 0)
+            value = default_seed;
+
+        state_[0] = value;
+
+        std::size_t i = 1;
+        UIntType *const s = state_;
+
+        // Same generator used to seed Mersenne twister
+        for ( ; i < state_size; ++i)
+            s[i] = (1812433253U * (s[i - 1] ^ (s[i - 1] >> (w - 2))) + i);
+
+        index_ = i;
+    }
+
     void seed()
     {
-        index_ = 0;
-        std::fill_n(state_, r, UIntType(0));
+        seed(default_seed);
     }
 
     template<class ForwardIterator>
@@ -331,6 +350,9 @@ public:
 
         for ( ; i < r && first != last; ++i, ++first)
             state_[i] = *first;
+
+        if (first == last && i < state_size)
+            throw std::invalid_argument("Seed sequence too short");
     }
 
     result_type operator()()
