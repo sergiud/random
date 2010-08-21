@@ -158,11 +158,10 @@ namespace Detail {
     template<class UIntType, UIntType r>
     struct Power2Modulo
     {
-        typedef typename 
-            boost::mpl::apply<
-                IsPowerOfTwo, 
-                boost::mpl::integral_c<UIntType, r> 
-            >::type type;
+        typedef typename boost::mpl::apply<
+                                IsPowerOfTwo, 
+                                boost::mpl::integral_c<UIntType, r> 
+                            >::type type;
 
         BOOST_STATIC_ASSERT(type::value);
 
@@ -195,11 +194,32 @@ namespace Detail {
         }
     };
 
+    template<class UIntType, UIntType r>
+    struct Modulo
+    {
+        typedef typename boost::mpl::apply<
+                                IsPowerOfTwo, 
+                                boost::mpl::integral_c<UIntType, r> 
+                            >::type rIsPowerOfTwo;
+
+        static UIntType calc(UIntType value)
+        {
+            // Use the bitwise and for power 2 modulo arithmetic or subtraction
+            // otherwise. Subtraction is about two times faster than direct
+            // modulo calculation.
+            return boost::mpl::if_<
+                        rIsPowerOfTwo,
+                            Power2Modulo<UIntType, r>,
+                            GenericModulo<UIntType, r>
+                    >::type::calc(value);
+        }
+    };   
+
     template<unsigned b, unsigned c>
     struct MatsumotoKuritaTempering
     {
-        template<class UIntType>
-        static UIntType apply(UIntType x)
+        template<std::size_t r, class UIntType, std::size_t N>
+        static UIntType apply(UIntType x, UIntType (&)[N], std::size_t)
         {
             x ^= (x << 7) & b;
             x ^= (x << 15) & c;
@@ -208,10 +228,20 @@ namespace Detail {
         }
     };
 
+    template<unsigned mask>
+    struct HaraseTempering
+    {
+        template<std::size_t r, class UIntType, std::size_t N>
+        static UIntType apply(UIntType x, UIntType (&s)[N], std::size_t m2)
+        {
+            return x ^ (s[Modulo<UIntType, r>::calc(m2 + 1)] & mask);
+        }
+    };
+
     struct NoTempering
     {
-        template<class UIntType>
-        static UIntType apply(UIntType x)
+        template<std::size_t r, class UIntType, std::size_t N>
+        static UIntType apply(UIntType x, UIntType (&)[N], std::size_t)
         {
             return x;
         }
@@ -258,23 +288,10 @@ class Well
     UIntType state_[r];
     std::size_t index_;
     
-    typedef typename 
-            boost::mpl::apply<
-                Detail::IsPowerOfTwo, 
-                boost::mpl::integral_c<UIntType, r> 
-            >::type is_power_of_two;
-
     template<class T>
     static T mod(T value)
     {
-        // Use the bitwise and for power 2 modulo arithmetic or subtraction
-        // otherwise. Subtraction is about two times faster than direct modulo
-        // calculation.
-        return boost::mpl::if_<
-                    is_power_of_two,
-                        Detail::Power2Modulo<UIntType, r>,
-                        Detail::GenericModulo<UIntType, r>
-                >::type::calc(value);
+        return Detail::Modulo<T, r>::calc(value);
     }
 
     UIntType state(std::size_t index) const
@@ -367,13 +384,14 @@ public:
         std::size_t j = i + r;
         std::size_t k = mod(j - 1); // [i,r-1]
         std::size_t l = mod(j - 2); // [i,r-2]
+        std::size_t im2 = i + m2;
 
         UIntType z0, z1, z2, z3, z4;
 
         z0 = (state_[k] & upper_mask) | (state_[l] & lower_mask);
         z1 = T0::transform(state_[i]) ^ 
              T1::transform(state(i + m1));
-        z2 = T2::transform(state(i + m2)) ^ 
+        z2 = T2::transform(state(im2)) ^ 
              T3::transform(state(i + m3));
         z3 = z1 ^ z2;
         z4 = T4::transform(z0) ^ T5::transform(z1) ^ 
@@ -384,7 +402,7 @@ public:
 
         index_ = k;
 
-        return Tempering::apply(z4);
+        return Tempering::template apply<r>(z4, state_, im2);
     }
 
     result_type min() const
@@ -516,5 +534,50 @@ typedef Well<boost::uint32_t, 32, 1391, 15, 23, 481, 229,
     Detail::M1, Detail::M3<20>, 
     Detail::M6<32, 9, 0xb729fcec, 0xfbffffff, 0x00020000>, Detail::M1,
     Detail::MatsumotoKuritaTempering<0x93dd1400, 0xfa118000> > Well44497b;
+
+// Maximally equidistributed versions using Harase's tempering method
+
+typedef Well<boost::uint32_t, 32, 25, 0, 14, 18, 17, 
+    Detail::M1, Detail::M3<-15>, Detail::M3<10>, Detail::M3<-11>, 
+    Detail::M3<16>, Detail::M2<20>, Detail::M1, Detail::M3<-28>,
+    Detail::HaraseTempering<0x4880> > Well800a_ME;
+
+typedef Well<boost::uint32_t, 32, 25, 0, 9, 4, 22, 
+    Detail::M3<-29>, Detail::M2<-14>, Detail::M1, Detail::M2<19>, 
+    Detail::M1, Detail::M3<10>, Detail::M4<0xd3e43ffd>, Detail::M3<-25>,
+    Detail::HaraseTempering<0x17030806> > Well800b_ME;
+
+typedef Well<boost::uint32_t, 32, 624, 31, 70, 179, 449, 
+    Detail::M3<-25>, Detail::M3<27>, Detail::M2<9>, Detail::M3<1>, 
+    Detail::M1, Detail::M3<-9>, Detail::M3<-21>, Detail::M3<21>,
+    Detail::HaraseTempering<0x4118000> > Well19937a_ME;
+
+typedef Well<boost::uint32_t, 32, 624, 31, 203, 613, 123, 
+    Detail::M3<7>, Detail::M1, Detail::M3<12>, Detail::M3<-10>, 
+    Detail::M3<-19>, Detail::M2<-11>, Detail::M3<4>, Detail::M3<-10>, 
+    Detail::HaraseTempering<0x30200010> > Well19937b_ME;
+
+typedef Well<boost::uint32_t, 32, 679, 27, 151, 327, 84, 
+    Detail::M1, Detail::M3<-26>, Detail::M3<19>, Detail::M0, 
+    Detail::M3<27>, Detail::M3<-11>, 
+    Detail::M6<32, 15, 0x86a9d87e, 0xffffffef, 0x00200000>, Detail::M3<-16>,
+    Detail::HaraseTempering<0x1002> > Well21701a_ME;
+
+typedef Well<boost::uint32_t, 32, 726, 23, 667, 43, 462, 
+    Detail::M3<28>, Detail::M1, Detail::M3<18>, Detail::M3<3>, 
+    Detail::M3<21>, Detail::M3<-17>, Detail::M3<-28>, Detail::M3<-1>,
+    Detail::HaraseTempering<0x5100000> > Well23209a_ME;
+
+typedef Well<boost::uint32_t, 32, 726, 23, 610, 175, 662, 
+    Detail::M4<0xa8c296d1>, Detail::M1, 
+    Detail::M6<32, 15, 0x5d6b45cc, 0xfffeffff, 0x00000002>, 
+    Detail::M3<-24>, Detail::M3<-26>, Detail::M1, Detail::M0, Detail::M3<16>,
+    Detail::HaraseTempering<0x34000300> > Well23209b_ME;
+
+typedef Well<boost::uint32_t, 32, 1391, 15, 23, 481, 229, 
+    Detail::M3<-24>, Detail::M3<30>, Detail::M3<-10>, Detail::M2<-26>, 
+    Detail::M1, Detail::M3<20>, 
+    Detail::M6<32, 9, 0xb729fcec, 0xfbffffff, 0x00020000>, Detail::M1,
+    Detail::HaraseTempering<0x48000000> > Well44497a_ME;
 
 #endif // WELL_HPP
