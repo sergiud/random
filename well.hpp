@@ -300,8 +300,8 @@ public:
         seed(value);
     }
 
-    template<class ForwardIterator>
-    Well(ForwardIterator& first, ForwardIterator last)
+    template<class InputIterator>
+    Well(InputIterator& first, InputIterator last)
     {
         seed(first, last);
     }
@@ -342,8 +342,8 @@ public:
         seed(default_seed);
     }
 
-    template<class ForwardIterator>
-    void seed(ForwardIterator& first, ForwardIterator last)
+    template<class InputIterator>
+    void seed(InputIterator& first, InputIterator last)
     {
         index_ = 0;
         std::size_t i = 0;
