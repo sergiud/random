@@ -21,6 +21,7 @@
 #include <ostream>
 #include <stdexcept>
 
+#include <boost/config.hpp>
 #include <boost/cstdint.hpp>
 #include <boost/mpl/apply.hpp>
 #include <boost/mpl/bitand.hpp>
@@ -279,7 +280,7 @@ template
     class T5,
     class T6,
     class T7,
-    class Tempering = Detail::NoTempering
+    class Tempering // mpl pluggable
 >
 class Well
 {
@@ -305,12 +306,19 @@ class Well
     }
 
 public:
+    template<class T>
+    struct apply
+    {
+        typedef Well<UIntType, w, r, p, m1, m2, m3, 
+                T0, T1, T2, T3, T4, T5, T6, T7, T> type;
+    };
+
     typedef UIntType result_type;
 
-    static const std::size_t word_size = w;
-    static const std::size_t state_size = r;
-    static const std::size_t mask_bits = p;
-    static const result_type default_seed = 5489;
+    BOOST_STATIC_CONSTANT(std::size_t, word_size = w);
+    BOOST_STATIC_CONSTANT(std::size_t, state_size = r);
+    BOOST_STATIC_CONSTANT(std::size_t, mask_bits = p);
+    BOOST_STATIC_CONSTANT(result_type, default_seed = 5489);
 
     explicit Well(result_type value = default_seed)
     {
@@ -454,130 +462,124 @@ public:
     }
 };
 
-typedef Well<boost::uint32_t, 32, 16, 0, 13, 9, 5, 
-    Detail::M3<-16>, Detail::M3<-15>, Detail::M3<11>, Detail::M0, 
-    Detail::M3<-2>, Detail::M3<-18>, Detail::M2<-28>, // FIXME: M2 not M3?
-    Detail::M5<-5, 0xda442d24> > Well512a;
+namespace Detail {
+    // Base definitions with pluggable tempering method
 
-typedef Well<boost::uint32_t, 32, 17, 23, 13, 11, 10, 
-    Detail::M3<-13>, Detail::M3<-15>, Detail::M1, Detail::M2<-21>, 
-    Detail::M3<-13>, Detail::M2<1>, Detail::M0, Detail::M3<11> > Well521a;
+    typedef Well<boost::uint32_t, 32, 16, 0, 13, 9, 5, 
+        M3<-16>, M3<-15>, M3<11>, M0, M3<-2>, M3<-18>, M2<-28>, 
+        M5<-5, 0xda442d24>, boost::mpl::_> Well512a_base;
 
-typedef Well<boost::uint32_t, 32, 17, 23, 11, 10, 7, 
-    Detail::M3<-21>, Detail::M3<6>, Detail::M0, Detail::M3<-13>, 
-    Detail::M3<13>, Detail::M2<-10>, Detail::M2<-5>, Detail::M3<13> > Well521b;
+    typedef Well<boost::uint32_t, 32, 17, 23, 13, 11, 10, 
+        M3<-13>, M3<-15>, M1, M2<-21>, M3<-13>, M2<1>, M0, M3<11>, 
+        boost::mpl::_> Well521a_base;
 
-typedef Well<boost::uint32_t, 32, 19, 1, 16, 15, 14, 
-    Detail::M3<19>, Detail::M3<11>, Detail::M3<-14>, Detail::M1, 
-    Detail::M3<18>, Detail::M1, Detail::M0, Detail::M3<-5> > Well607a;
+    typedef Well<boost::uint32_t, 32, 17, 23, 11, 10, 7, 
+        M3<-21>, M3<6>, M0, M3<-13>, M3<13>, M2<-10>, M2<-5>, M3<13>, 
+        boost::mpl::_> Well521b_base;
 
-typedef Well<boost::uint32_t, 32, 19, 1, 16, 18, 13, 
-    Detail::M3<-18>, Detail::M3<-14>, Detail::M0, Detail::M3<18>, 
-    Detail::M3<-24>, Detail::M3<5>, Detail::M3<-1>, Detail::M0> Well607b;
+    typedef Well<boost::uint32_t, 32, 19, 1, 16, 15, 14, 
+        M3<19>, M3<11>, M3<-14>, M1, M3<18>, M1, M0, M3<-5>, 
+        boost::mpl::_> Well607a_base;
 
-typedef Well<boost::uint32_t, 32, 25, 0, 14, 18, 17, 
-    Detail::M1, Detail::M3<-15>, Detail::M3<10>, Detail::M3<-11>, 
-    Detail::M3<16>, Detail::M2<20>, Detail::M1, Detail::M3<-28> > Well800a;
+    typedef Well<boost::uint32_t, 32, 19, 1, 16, 18, 13, 
+        M3<-18>, M3<-14>, M0, M3<18>, M3<-24>, M3<5>, M3<-1>, M0, 
+        boost::mpl::_> Well607b_base;
 
-typedef Well<boost::uint32_t, 32, 25, 0, 9, 4, 22, 
-    Detail::M3<-29>, Detail::M2<-14>, Detail::M1, Detail::M2<19>, 
-    Detail::M1, Detail::M3<10>, Detail::M4<0xd3e43ffd>, Detail::M3<-25> > 
-    Well800b;
+    typedef Well<boost::uint32_t, 32, 25, 0, 14, 18, 17, 
+        M1, M3<-15>, M3<10>, M3<-11>, M3<16>, M2<20>, M1, M3<-28>, 
+        boost::mpl::_> Well800a_base;
 
-typedef Well<boost::uint32_t, 32, 32, 0, 3, 24, 10, 
-    Detail::M1, Detail::M3<8>, Detail::M3<-19>, Detail::M3<-14>, 
-    Detail::M3<-11>, Detail::M3<-7>, Detail::M3<-13>, Detail::M0> Well1024a;
+    typedef Well<boost::uint32_t, 32, 25, 0, 9, 4, 22, 
+        M3<-29>, M2<-14>, M1, M2<19>, M1, M3<10>, M4<0xd3e43ffd>, M3<-25>, 
+        boost::mpl::_> Well800b_base;
 
-typedef Well<boost::uint32_t, 32, 32, 0, 22, 25, 26, 
-    Detail::M3<-21>, Detail::M3<17>, Detail::M4<0x8bdcb91e>, Detail::M3<15>, 
-    Detail::M3<-14>, Detail::M3<-21>, Detail::M1, Detail::M0> Well1024b;
+    typedef Well<boost::uint32_t, 32, 32, 0, 3, 24, 10, 
+        M1, M3<8>, M3<-19>, M3<-14>, M3<-11>, M3<-7>, M3<-13>, M0, 
+        boost::mpl::_> Well1024a_base;
 
-typedef Well<boost::uint32_t, 32, 624, 31, 70, 179, 449, 
-    Detail::M3<-25>, Detail::M3<27>, Detail::M2<9>, Detail::M3<1>, 
-    Detail::M1, Detail::M3<-9>, Detail::M3<-21>, Detail::M3<21> > Well19937a;
+    typedef Well<boost::uint32_t, 32, 32, 0, 22, 25, 26, 
+        M3<-21>, M3<17>, M4<0x8bdcb91e>, M3<15>, M3<-14>, M3<-21>, M1, M0, 
+        boost::mpl::_> Well1024b_base;
 
-typedef Well<boost::uint32_t, 32, 624, 31, 203, 613, 123, 
-    Detail::M3<7>, Detail::M1, Detail::M3<12>, Detail::M3<-10>, 
-    Detail::M3<-19>, Detail::M2<-11>, Detail::M3<4>, Detail::M3<-10> > 
-    Well19937b;
+    typedef Well<boost::uint32_t, 32, 624, 31, 70, 179, 449, 
+        M3<-25>, M3<27>, M2<9>, M3<1>, M1, M3<-9>, M3<-21>, M3<21>, 
+        boost::mpl::_> Well19937a_base;
 
-typedef Well<boost::uint32_t, 32, 624, 31, 70, 179, 449, 
-    Detail::M3<-25>, Detail::M3<27>, Detail::M2<9>, Detail::M3<1>, 
-    Detail::M1, Detail::M3<-9>, Detail::M3<-21>, Detail::M3<21>,
-    Detail::MatsumotoKuritaTempering<0xe46e1700, 0x9b868000> > Well19937c;
+    typedef Well<boost::uint32_t, 32, 624, 31, 203, 613, 123, 
+        M3<7>, M1, M3<12>, M3<-10>, M3<-19>, M2<-11>, M3<4>, M3<-10>, 
+        boost::mpl::_> Well19937b_base;
 
-typedef Well<boost::uint32_t, 32, 679, 27, 151, 327, 84, 
-    Detail::M1, Detail::M3<-26>, Detail::M3<19>, Detail::M0, 
-    Detail::M3<27>, Detail::M3<-11>, 
-    Detail::M6<32, 15, 0x86a9d87e, 0xffffffef, 0x00200000>, Detail::M3<-16> > 
-    Well21701a;
+    typedef Well<boost::uint32_t, 32, 679, 27, 151, 327, 84, 
+        M1, M3<-26>, M3<19>, M0, M3<27>, M3<-11>, 
+        M6<32, 15, 0x86a9d87e, 0xffffffef, 0x00200000>, M3<-16>, 
+        boost::mpl::_> Well21701a_base;
 
-typedef Well<boost::uint32_t, 32, 726, 23, 667, 43, 462, 
-    Detail::M3<28>, Detail::M1, Detail::M3<18>, Detail::M3<3>, 
-    Detail::M3<21>, Detail::M3<-17>, Detail::M3<-28>, Detail::M3<-1> > 
-    Well23209a;
+    typedef Well<boost::uint32_t, 32, 726, 23, 667, 43, 462, 
+        M3<28>, M1, M3<18>, M3<3>, M3<21>, M3<-17>, M3<-28>, M3<-1>, 
+        boost::mpl::_> Well23209a_base;
 
-typedef Well<boost::uint32_t, 32, 726, 23, 610, 175, 662, 
-    Detail::M4<0xa8c296d1>, Detail::M1, 
-    Detail::M6<32, 15, 0x5d6b45cc, 0xfffeffff, 0x00000002>, 
-    Detail::M3<-24>, Detail::M3<-26>, Detail::M1, Detail::M0, Detail::M3<16> > 
-    Well23209b;
+    typedef Well<boost::uint32_t, 32, 726, 23, 610, 175, 662, 
+        M4<0xa8c296d1>, M1, M6<32, 15, 0x5d6b45cc, 0xfffeffff, 0x00000002>, 
+        M3<-24>, M3<-26>, M1, M0, M3<16>, boost::mpl::_> Well23209b_base;
 
-typedef Well<boost::uint32_t, 32, 1391, 15, 23, 481, 229, 
-    Detail::M3<-24>, Detail::M3<30>, Detail::M3<-10>, Detail::M2<-26>, 
-    Detail::M1, Detail::M3<20>, 
-    Detail::M6<32, 9, 0xb729fcec, 0xfbffffff, 0x00020000>, Detail::M1> 
-    Well44497a;
+    typedef Well<boost::uint32_t, 32, 1391, 15, 23, 481, 229, 
+        M3<-24>, M3<30>, M3<-10>, M2<-26>, M1, M3<20>, 
+        M6<32, 9, 0xb729fcec, 0xfbffffff, 0x00020000>, M1, 
+        boost::mpl::_> Well44497a_base;
+}
 
-typedef Well<boost::uint32_t, 32, 1391, 15, 23, 481, 229, 
-    Detail::M3<-24>, Detail::M3<30>, Detail::M3<-10>, Detail::M2<-26>, 
-    Detail::M1, Detail::M3<20>, 
-    Detail::M6<32, 9, 0xb729fcec, 0xfbffffff, 0x00020000>, Detail::M1,
-    Detail::MatsumotoKuritaTempering<0x93dd1400, 0xfa118000> > Well44497b;
+typedef boost::mpl::apply1<Detail::Well512a_base, 
+    Detail::NoTempering>::type Well512a;
+typedef boost::mpl::apply1<Detail::Well521a_base, 
+    Detail::NoTempering>::type Well521a;
+typedef boost::mpl::apply1<Detail::Well521b_base, 
+    Detail::NoTempering>::type Well521b;
+typedef boost::mpl::apply1<Detail::Well607a_base, 
+    Detail::NoTempering>::type Well607a;
+typedef boost::mpl::apply1<Detail::Well607b_base, 
+    Detail::NoTempering>::type Well607b;
+typedef boost::mpl::apply1<Detail::Well800a_base, 
+    Detail::NoTempering>::type Well800a;
+typedef boost::mpl::apply1<Detail::Well800b_base, 
+    Detail::NoTempering>::type Well800b;
+typedef boost::mpl::apply1<Detail::Well1024a_base, 
+    Detail::NoTempering>::type Well1024a;
+typedef boost::mpl::apply1<Detail::Well1024b_base, 
+    Detail::NoTempering>::type Well1024b;
+typedef boost::mpl::apply1<Detail::Well19937a_base, 
+    Detail::NoTempering>::type Well19937a;
+typedef boost::mpl::apply1<Detail::Well19937b_base, 
+    Detail::NoTempering>::type Well19937b;
+typedef boost::mpl::apply1<Detail::Well19937a_base, 
+    Detail::MatsumotoKuritaTempering<0xe46e1700, 0x9b868000> >::type Well19937c;
+typedef boost::mpl::apply1<Detail::Well21701a_base, 
+    Detail::NoTempering>::type Well21701a;
+typedef boost::mpl::apply1<Detail::Well23209a_base, 
+    Detail::NoTempering>::type Well23209a;
+typedef boost::mpl::apply1<Detail::Well23209b_base, 
+    Detail::NoTempering>::type Well23209b;
+typedef boost::mpl::apply1<Detail::Well44497a_base, 
+    Detail::NoTempering>::type Well44497a;
+typedef boost::mpl::apply1<Detail::Well44497a_base, 
+    Detail::MatsumotoKuritaTempering<0x93dd1400, 0xfa118000> >::type Well44497b;
 
 // Maximally equidistributed versions using Harase's tempering method
 
-typedef Well<boost::uint32_t, 32, 25, 0, 14, 18, 17, 
-    Detail::M1, Detail::M3<-15>, Detail::M3<10>, Detail::M3<-11>, 
-    Detail::M3<16>, Detail::M2<20>, Detail::M1, Detail::M3<-28>,
-    Detail::HaraseTempering<0x4880> > Well800a_ME;
-
-typedef Well<boost::uint32_t, 32, 25, 0, 9, 4, 22, 
-    Detail::M3<-29>, Detail::M2<-14>, Detail::M1, Detail::M2<19>, 
-    Detail::M1, Detail::M3<10>, Detail::M4<0xd3e43ffd>, Detail::M3<-25>,
-    Detail::HaraseTempering<0x17030806> > Well800b_ME;
-
-typedef Well<boost::uint32_t, 32, 624, 31, 70, 179, 449, 
-    Detail::M3<-25>, Detail::M3<27>, Detail::M2<9>, Detail::M3<1>, 
-    Detail::M1, Detail::M3<-9>, Detail::M3<-21>, Detail::M3<21>,
-    Detail::HaraseTempering<0x4118000> > Well19937a_ME;
-
-typedef Well<boost::uint32_t, 32, 624, 31, 203, 613, 123, 
-    Detail::M3<7>, Detail::M1, Detail::M3<12>, Detail::M3<-10>, 
-    Detail::M3<-19>, Detail::M2<-11>, Detail::M3<4>, Detail::M3<-10>, 
-    Detail::HaraseTempering<0x30200010> > Well19937b_ME;
-
-typedef Well<boost::uint32_t, 32, 679, 27, 151, 327, 84, 
-    Detail::M1, Detail::M3<-26>, Detail::M3<19>, Detail::M0, 
-    Detail::M3<27>, Detail::M3<-11>, 
-    Detail::M6<32, 15, 0x86a9d87e, 0xffffffef, 0x00200000>, Detail::M3<-16>,
-    Detail::HaraseTempering<0x1002> > Well21701a_ME;
-
-typedef Well<boost::uint32_t, 32, 726, 23, 667, 43, 462, 
-    Detail::M3<28>, Detail::M1, Detail::M3<18>, Detail::M3<3>, 
-    Detail::M3<21>, Detail::M3<-17>, Detail::M3<-28>, Detail::M3<-1>,
-    Detail::HaraseTempering<0x5100000> > Well23209a_ME;
-
-typedef Well<boost::uint32_t, 32, 726, 23, 610, 175, 662, 
-    Detail::M4<0xa8c296d1>, Detail::M1, 
-    Detail::M6<32, 15, 0x5d6b45cc, 0xfffeffff, 0x00000002>, 
-    Detail::M3<-24>, Detail::M3<-26>, Detail::M1, Detail::M0, Detail::M3<16>,
-    Detail::HaraseTempering<0x34000300> > Well23209b_ME;
-
-typedef Well<boost::uint32_t, 32, 1391, 15, 23, 481, 229, 
-    Detail::M3<-24>, Detail::M3<30>, Detail::M3<-10>, Detail::M2<-26>, 
-    Detail::M1, Detail::M3<20>, 
-    Detail::M6<32, 9, 0xb729fcec, 0xfbffffff, 0x00020000>, Detail::M1,
-    Detail::HaraseTempering<0x48000000> > Well44497a_ME;
+typedef boost::mpl::apply1<Detail::Well800a_base, 
+    Detail::HaraseTempering<0x4880> >::type Well800a_ME;
+typedef boost::mpl::apply1<Detail::Well800b_base, 
+    Detail::HaraseTempering<0x17030806> >::type Well800b_ME;
+typedef boost::mpl::apply1<Detail::Well19937a_base, 
+    Detail::HaraseTempering<0x4118000> >::type Well19937a_ME;
+typedef boost::mpl::apply1<Detail::Well19937b_base, 
+    Detail::HaraseTempering<0x30200010> >::type Well19937b_ME;
+typedef boost::mpl::apply1<Detail::Well21701a_base, 
+    Detail::HaraseTempering<0x1002> >::type Well21701a_ME;
+typedef boost::mpl::apply1<Detail::Well23209a_base, 
+    Detail::HaraseTempering<0x5100000> >::type Well23209a_ME;
+typedef boost::mpl::apply1<Detail::Well23209b_base, 
+    Detail::HaraseTempering<0x34000300> >::type Well23209b_ME;
+typedef boost::mpl::apply1<Detail::Well44497a_base, 
+    Detail::HaraseTempering<0x48000000> >::type Well44497a_ME;
 
 #endif // WELL_HPP
