@@ -306,12 +306,14 @@ class Well
     }
 
 public:
+    //! @cond hide_private
     template<class T>
     struct apply
     {
         typedef Well<UIntType, w, r, p, m1, m2, m3, 
                 T0, T1, T2, T3, T4, T5, T6, T7, T> type;
     };
+    //! @endcond hide_private
 
     typedef UIntType result_type;
 
@@ -526,7 +528,7 @@ namespace Detail {
         M3<-24>, M3<30>, M3<-10>, M2<-26>, M1, M3<20>, 
         M6<32, 9, 0xb729fcec, 0xfbffffff, 0x00020000>, M1, 
         boost::mpl::_> Well44497a_base;
-}
+} // namespace Detail
 
 typedef boost::mpl::apply1<Detail::Well512a_base, 
     Detail::NoTempering>::type Well512a;

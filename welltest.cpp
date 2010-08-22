@@ -75,9 +75,9 @@ public:
 /**
  * @brief Defines the actual test case.
  *
- * @tparam name The name of the test case.
- * @tparam type WELL pseudo-random generator type.
- * @tparam expected The expected result after @f$10^9@f$ iterations.
+ * @param name The name of the test case.
+ * @param type WELL pseudo-random generator type.
+ * @param expected The expected result after @f$10^9@f$ iterations.
  *
  * @hideinitializer
  */
