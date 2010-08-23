@@ -32,7 +32,6 @@
 #include <boost/mpl/placeholders.hpp>
 #include <boost/ref.hpp>
 #include <boost/static_assert.hpp>
-#include <boost/type_traits.hpp>
 
 //! @cond hide_private
 namespace Detail {
@@ -185,7 +184,7 @@ namespace Detail {
         template<class T>
         static T calc(T value)
         {
-            BOOST_STATIC_ASSERT(boost::is_unsigned<T>::value);
+            BOOST_STATIC_ASSERT(!std::numeric_limits<UIntType>::is_signed);
             assert(value < 2 * r);
 
             if (value >= r)
@@ -284,7 +283,12 @@ template
 >
 class Well
 {
-    BOOST_STATIC_ASSERT(std::numeric_limits<UIntType>::digits == w);
+    BOOST_STATIC_ASSERT(!std::numeric_limits<UIntType>::is_signed);
+    BOOST_STATIC_ASSERT(w <= std::numeric_limits<UIntType>::digits);    
+    BOOST_STATIC_ASSERT(r > 0 && p < w);
+    BOOST_STATIC_ASSERT(m1 > 0 && m1 < r);
+    BOOST_STATIC_ASSERT(m2 > 0 && m2 < r);
+    BOOST_STATIC_ASSERT(m3 > 0 && m3 < r);
 
     UIntType state_[r];
     std::size_t index_;
@@ -320,7 +324,7 @@ public:
     BOOST_STATIC_CONSTANT(std::size_t, word_size = w);
     BOOST_STATIC_CONSTANT(std::size_t, state_size = r);
     BOOST_STATIC_CONSTANT(std::size_t, mask_bits = p);
-    BOOST_STATIC_CONSTANT(result_type, default_seed = 5489);
+    BOOST_STATIC_CONSTANT(result_type, default_seed = 5489U);
 
     explicit Well(result_type value = default_seed)
     {
@@ -347,9 +351,9 @@ public:
         std::generate_n(state_, state_size, boost::ref(g));
     }
 
-    void seed(UIntType value)
+    void seed(result_type value = default_seed)
     {
-        if (value == 0)
+        if (value == 0U)
             value = default_seed;
 
         state_[0] = value;
@@ -362,11 +366,6 @@ public:
             s[i] = (1812433253U * (s[i - 1] ^ (s[i - 1] >> (w - 2))) + i);
 
         index_ = i;
-    }
-
-    void seed()
-    {
-        seed(default_seed);
     }
 
     template<class InputIterator>
@@ -394,15 +393,18 @@ public:
         std::size_t j = i + r;
         std::size_t k = mod(j - 1); // [i,r-1]
         std::size_t l = mod(j - 2); // [i,r-2]
+        
+        std::size_t im1 = i + m1;
         std::size_t im2 = i + m2;
+        std::size_t im3 = i + m3;
 
         UIntType z0, z1, z2, z3, z4;
 
         z0 = (state_[k] & upper_mask) | (state_[l] & lower_mask);
         z1 = T0::transform(state_[i]) ^ 
-             T1::transform(state(i + m1));
+             T1::transform(state(im1));
         z2 = T2::transform(state(im2)) ^ 
-             T3::transform(state(i + m3));
+             T3::transform(state(im3));
         z3 = z1 ^ z2;
         z4 = T4::transform(z0) ^ T5::transform(z1) ^ 
              T6::transform(z2) ^ T7::transform(z3);
@@ -415,14 +417,21 @@ public:
         return Tempering::template apply<r>(z4, state_, im2);
     }
 
-    result_type min() const
+    result_type min BOOST_PREVENT_MACRO_SUBSTITUTION () const
     {
-        return 0;
+        return 0U;
     }
 
-    result_type max() const
+    result_type max BOOST_PREVENT_MACRO_SUBSTITUTION () const
     {
         return ~0U >> (std::numeric_limits<UIntType>::digits - w);
+    }
+
+    void discard(boost::ulong_long_type z)
+    {
+        while (z-- > 0) {
+            (*this)();
+        }
     }
 
     friend bool operator==(const Well& lhs, const Well& rhs)
