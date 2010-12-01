@@ -324,7 +324,7 @@ public:
     BOOST_STATIC_CONSTANT(std::size_t, word_size = w);
     BOOST_STATIC_CONSTANT(std::size_t, state_size = r);
     BOOST_STATIC_CONSTANT(std::size_t, mask_bits = p);
-    BOOST_STATIC_CONSTANT(result_type, default_seed = 5489U);
+    BOOST_STATIC_CONSTANT(UIntType, default_seed = 5489U);
 
     explicit Well(result_type value = default_seed)
     {
@@ -472,6 +472,29 @@ public:
         return in;
     }
 };
+
+#ifndef BOOST_NO_INCLASS_MEMBER_INITIALIZATION
+template<class UIntType, std::size_t w, std::size_t r, std::size_t p, 
+    std::size_t m1, std::size_t m2, std::size_t m3, class T0, class T1, 
+    class T2, class T3, class T4, class T5, class T6, class T7, class Tempering>
+const std::size_t Well<UIntType, w, r, p, m1, m2, m3, T0, T1, T2, T3, T4, T5,
+      T6, T7, Tempering>::word_size;
+template<class UIntType, std::size_t w, std::size_t r, std::size_t p, 
+    std::size_t m1, std::size_t m2, std::size_t m3, class T0, class T1, 
+    class T2, class T3, class T4, class T5, class T6, class T7, class Tempering>
+const std::size_t Well<UIntType, w, r, p, m1, m2, m3, T0, T1, T2, T3, T4, T5,
+      T6, T7, Tempering>::state_size;
+template<class UIntType, std::size_t w, std::size_t r, std::size_t p, 
+    std::size_t m1, std::size_t m2, std::size_t m3, class T0, class T1, 
+    class T2, class T3, class T4, class T5, class T6, class T7, class Tempering>
+const std::size_t Well<UIntType, w, r, p, m1, m2, m3, T0, T1, T2, T3, T4, T5,
+      T6, T7, Tempering>::mask_bits;
+template<class UIntType, std::size_t w, std::size_t r, std::size_t p, 
+    std::size_t m1, std::size_t m2, std::size_t m3, class T0, class T1, 
+    class T2, class T3, class T4, class T5, class T6, class T7, class Tempering>
+const UIntType Well<UIntType, w, r, p, m1, m2, m3, T0, T1, T2, T3, T4, T5, T6,
+      T7, Tempering>::default_seed;
+#endif // BOOST_NO_INCLASS_MEMBER_INITIALIZATION
 
 namespace Detail {
     // Base definitions with pluggable tempering method
