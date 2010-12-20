@@ -21,3 +21,22 @@ add_executable (
 
 target_link_libraries (welltest ${Boost_LIBRARIES})
 
+enable_testing()
+
+add_test (WELL512a welltest -t WELL512a)
+add_test (WELL521a welltest -t WELL521a)
+add_test (WELL521b welltest -t WELL521b)
+add_test (WELL607a welltest -t WELL607a)
+add_test (WELL607b welltest -t WELL607b)
+add_test (WELL800a welltest -t WELL800a)
+add_test (WELL800b welltest -t WELL800b)
+add_test (WELL1024a welltest -t WELL1024a)
+add_test (WELL1024b welltest -t WELL1024b)
+add_test (WELL19937a welltest -t WELL19937a)
+add_test (WELL19937b welltest -t WELL19937b)
+add_test (WELL19937c welltest -t WELL19937c)
+add_test (WELL21701a welltest -t WELL21701a)
+add_test (WELL23209a welltest -t WELL23209a)
+add_test (WELL23209b welltest -t WELL23209b)
+add_test (WELL44497a welltest -t WELL44497a)
+add_test (WELL44497b welltest -t WELL44497b)
