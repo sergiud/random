@@ -310,15 +310,6 @@ class Well
     }
 
 public:
-    //! @cond hide_private
-    template<class T>
-    struct apply
-    {
-        typedef Well<UIntType, w, r, p, m1, m2, m3, 
-                T0, T1, T2, T3, T4, T5, T6, T7, T> type;
-    };
-    //! @endcond hide_private
-
     typedef UIntType result_type;
 
     BOOST_STATIC_CONSTANT(std::size_t, word_size = w);
@@ -499,67 +490,96 @@ const UIntType Well<UIntType, w, r, p, m1, m2, m3, T0, T1, T2, T3, T4, T5, T6,
 namespace Detail {
     // Base definitions with pluggable tempering method
 
-    typedef Well<boost::uint32_t, 32, 16, 0, 13, 9, 5, 
+    template
+    <
+        class UIntType,
+        std::size_t w,
+        std::size_t r,
+        std::size_t p,
+        std::size_t m1,  
+        std::size_t m2,
+        std::size_t m3,
+        class T0,
+        class T1,
+        class T2,
+        class T3,
+        class T4,
+        class T5,
+        class T6,
+        class T7
+    >
+    struct Well_quoted
+    {
+        template
+        <
+            class T
+        >
+        struct apply
+        {
+            typedef Well<UIntType, w, r, p, m1, m2, m3, T0, T1, T2, T3, T4, T5,
+                T6, T7, T> type;
+        };
+    };
+
+    typedef Well_quoted<boost::uint32_t, 32, 16, 0, 13, 9, 5, 
         M3<-16>, M3<-15>, M3<11>, M0, M3<-2>, M3<-18>, M2<-28>, 
-        M5<-5, 0xda442d24>, boost::mpl::_> Well512a_base;
+        M5<-5, 0xda442d24> > Well512a_base;
 
-    typedef Well<boost::uint32_t, 32, 17, 23, 13, 11, 10, 
-        M3<-13>, M3<-15>, M1, M2<-21>, M3<-13>, M2<1>, M0, M3<11>, 
-        boost::mpl::_> Well521a_base;
+    typedef Well_quoted<boost::uint32_t, 32, 17, 23, 13, 11, 10, 
+        M3<-13>, M3<-15>, M1, M2<-21>, M3<-13>, M2<1>, M0, M3<11> >
+        Well521a_base;
 
-    typedef Well<boost::uint32_t, 32, 17, 23, 11, 10, 7, 
-        M3<-21>, M3<6>, M0, M3<-13>, M3<13>, M2<-10>, M2<-5>, M3<13>, 
-        boost::mpl::_> Well521b_base;
+    typedef Well_quoted<boost::uint32_t, 32, 17, 23, 11, 10, 7, 
+        M3<-21>, M3<6>, M0, M3<-13>, M3<13>, M2<-10>, M2<-5>, M3<13> >
+        Well521b_base;
 
-    typedef Well<boost::uint32_t, 32, 19, 1, 16, 15, 14, 
-        M3<19>, M3<11>, M3<-14>, M1, M3<18>, M1, M0, M3<-5>, 
-        boost::mpl::_> Well607a_base;
+    typedef Well_quoted<boost::uint32_t, 32, 19, 1, 16, 15, 14, 
+        M3<19>, M3<11>, M3<-14>, M1, M3<18>, M1, M0, M3<-5> > Well607a_base;
 
-    typedef Well<boost::uint32_t, 32, 19, 1, 16, 18, 13, 
-        M3<-18>, M3<-14>, M0, M3<18>, M3<-24>, M3<5>, M3<-1>, M0, 
-        boost::mpl::_> Well607b_base;
+    typedef Well_quoted<boost::uint32_t, 32, 19, 1, 16, 18, 13, 
+        M3<-18>, M3<-14>, M0, M3<18>, M3<-24>, M3<5>, M3<-1>, M0>
+        Well607b_base;
 
-    typedef Well<boost::uint32_t, 32, 25, 0, 14, 18, 17, 
-        M1, M3<-15>, M3<10>, M3<-11>, M3<16>, M2<20>, M1, M3<-28>, 
-        boost::mpl::_> Well800a_base;
+    typedef Well_quoted<boost::uint32_t, 32, 25, 0, 14, 18, 17, 
+        M1, M3<-15>, M3<10>, M3<-11>, M3<16>, M2<20>, M1, M3<-28> >
+        Well800a_base;
 
-    typedef Well<boost::uint32_t, 32, 25, 0, 9, 4, 22, 
-        M3<-29>, M2<-14>, M1, M2<19>, M1, M3<10>, M4<0xd3e43ffd>, M3<-25>, 
-        boost::mpl::_> Well800b_base;
+    typedef Well_quoted<boost::uint32_t, 32, 25, 0, 9, 4, 22, 
+        M3<-29>, M2<-14>, M1, M2<19>, M1, M3<10>, M4<0xd3e43ffd>, M3<-25> >
+        Well800b_base;
 
-    typedef Well<boost::uint32_t, 32, 32, 0, 3, 24, 10, 
-        M1, M3<8>, M3<-19>, M3<-14>, M3<-11>, M3<-7>, M3<-13>, M0, 
-        boost::mpl::_> Well1024a_base;
+    typedef Well_quoted<boost::uint32_t, 32, 32, 0, 3, 24, 10, 
+        M1, M3<8>, M3<-19>, M3<-14>, M3<-11>, M3<-7>, M3<-13>, M0>
+        Well1024a_base;
 
-    typedef Well<boost::uint32_t, 32, 32, 0, 22, 25, 26, 
-        M3<-21>, M3<17>, M4<0x8bdcb91e>, M3<15>, M3<-14>, M3<-21>, M1, M0, 
-        boost::mpl::_> Well1024b_base;
+    typedef Well_quoted<boost::uint32_t, 32, 32, 0, 22, 25, 26, 
+        M3<-21>, M3<17>, M4<0x8bdcb91e>, M3<15>, M3<-14>, M3<-21>, M1, M0>
+        Well1024b_base;
 
-    typedef Well<boost::uint32_t, 32, 624, 31, 70, 179, 449, 
-        M3<-25>, M3<27>, M2<9>, M3<1>, M1, M3<-9>, M3<-21>, M3<21>, 
-        boost::mpl::_> Well19937a_base;
+    typedef Well_quoted<boost::uint32_t, 32, 624, 31, 70, 179, 449, 
+        M3<-25>, M3<27>, M2<9>, M3<1>, M1, M3<-9>, M3<-21>, M3<21> >
+        Well19937a_base;
 
-    typedef Well<boost::uint32_t, 32, 624, 31, 203, 613, 123, 
-        M3<7>, M1, M3<12>, M3<-10>, M3<-19>, M2<-11>, M3<4>, M3<-10>, 
-        boost::mpl::_> Well19937b_base;
+    typedef Well_quoted<boost::uint32_t, 32, 624, 31, 203, 613, 123, 
+        M3<7>, M1, M3<12>, M3<-10>, M3<-19>, M2<-11>, M3<4>, M3<-10> >
+        Well19937b_base;
 
-    typedef Well<boost::uint32_t, 32, 679, 27, 151, 327, 84, 
+    typedef Well_quoted<boost::uint32_t, 32, 679, 27, 151, 327, 84, 
         M1, M3<-26>, M3<19>, M0, M3<27>, M3<-11>, 
-        M6<32, 15, 0x86a9d87e, 0xffffffef, 0x00200000>, M3<-16>, 
-        boost::mpl::_> Well21701a_base;
+        M6<32, 15, 0x86a9d87e, 0xffffffef, 0x00200000>, M3<-16> >
+        Well21701a_base;
 
-    typedef Well<boost::uint32_t, 32, 726, 23, 667, 43, 462, 
-        M3<28>, M1, M3<18>, M3<3>, M3<21>, M3<-17>, M3<-28>, M3<-1>, 
-        boost::mpl::_> Well23209a_base;
+    typedef Well_quoted<boost::uint32_t, 32, 726, 23, 667, 43, 462, 
+        M3<28>, M1, M3<18>, M3<3>, M3<21>, M3<-17>, M3<-28>, M3<-1> >
+        Well23209a_base;
 
-    typedef Well<boost::uint32_t, 32, 726, 23, 610, 175, 662, 
+    typedef Well_quoted<boost::uint32_t, 32, 726, 23, 610, 175, 662, 
         M4<0xa8c296d1>, M1, M6<32, 15, 0x5d6b45cc, 0xfffeffff, 0x00000002>, 
-        M3<-24>, M3<-26>, M1, M0, M3<16>, boost::mpl::_> Well23209b_base;
+        M3<-24>, M3<-26>, M1, M0, M3<16> > Well23209b_base;
 
-    typedef Well<boost::uint32_t, 32, 1391, 15, 23, 481, 229, 
+    typedef Well_quoted<boost::uint32_t, 32, 1391, 15, 23, 481, 229, 
         M3<-24>, M3<30>, M3<-10>, M2<-26>, M1, M3<20>, 
-        M6<32, 9, 0xb729fcec, 0xfbffffff, 0x00020000>, M1, 
-        boost::mpl::_> Well44497a_base;
+        M6<32, 9, 0xb729fcec, 0xfbffffff, 0x00020000>, M1> Well44497a_base;
 } // namespace Detail
 
 typedef boost::mpl::apply1<Detail::Well512a_base, 
