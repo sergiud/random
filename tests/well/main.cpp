@@ -22,9 +22,9 @@
  *
  * The test case performs the following checks:
  * -# The last generated value is equal to the value generate by the reference
- *    implementation after @f$10^9@f$ iterations. The generator is seeded using 
+ *    implementation after @f$10^9@f$ iterations. The generator is seeded using
  *    an array filled with 1s.
- * -# The @c min and @c max methods of the @ref Well generator return 0 and 
+ * -# The @c min and @c max methods of the @ref Well generator return 0 and
  *    @f$2^{32}-1@f$ respectively.
  *
  * @tparam RandomNumberGenerator WELL PRNG implementation type.
@@ -55,7 +55,7 @@ class WellTestCase
 
         while (iterations-- > 0)
             x = rng();
-        
+
         return x;
     }
 
