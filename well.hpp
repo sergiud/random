@@ -247,7 +247,7 @@ namespace Detail {
         }
     };
 } // namespace Detail
-//! @endcond hide_private
+//! @endcond
 
 /**
  * @brief Well-Equidistributed Long-period Linear (WELL) pseudo-random number
