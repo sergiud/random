@@ -290,25 +290,6 @@ class Well
     BOOST_STATIC_ASSERT(m2 > 0 && m2 < r);
     BOOST_STATIC_ASSERT(m3 > 0 && m3 < r);
 
-    UIntType state_[r];
-    std::size_t index_;
-
-    template<class T>
-    static T mod(T value)
-    {
-        return Detail::Modulo<T, r>::calc(value);
-    }
-
-    UIntType state(std::size_t index) const
-    {
-        return state_[mod(index)];
-    }
-
-    UIntType compute(std::size_t index) const
-    {
-        return state_[(index_ + index + r) % r];
-    }
-
 public:
     typedef UIntType result_type;
 
@@ -462,6 +443,26 @@ public:
 
         return in;
     }
+
+private:
+    template<class T>
+    static T mod(T value)
+    {
+        return Detail::Modulo<T, r>::calc(value);
+    }
+
+    UIntType state(std::size_t index) const
+    {
+        return state_[mod(index)];
+    }
+
+    UIntType compute(std::size_t index) const
+    {
+        return state_[(index_ + index + r) % r];
+    }
+
+    UIntType state_[r];
+    std::size_t index_;
 };
 
 #ifndef BOOST_NO_INCLASS_MEMBER_INITIALIZATION
