@@ -3,6 +3,10 @@ project (Random)
 
 enable_testing()
 
+if (WIN32)
+  option (Boost_USE_STATIC_LIBS "Use static Boost libraries" ON)
+endif (WIN32)
+
 find_package (Boost 1.43.0 REQUIRED unit_test_framework)
 
 include_directories (${Boost_INCLUDE_DIRS})
