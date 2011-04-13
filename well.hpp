@@ -35,7 +35,7 @@
 
 //! @cond hide_private
 namespace Detail {
-    template<class UIntType, boost::uint_least32_t N>
+    template<class UIntType, unsigned N>
     struct Left
     {
         static UIntType shift(UIntType a)
@@ -44,7 +44,7 @@ namespace Detail {
         }
     };
 
-    template<class UIntType, boost::uint_least32_t N>
+    template<class UIntType, unsigned N>
     struct Right
     {
         static UIntType shift(UIntType a)
@@ -127,7 +127,14 @@ namespace Detail {
         }
     };
 
-    template<std::size_t w, boost::uint_least32_t q, boost::uint_least32_t a, boost::uint_least32_t ds, boost::uint_least32_t dt>
+    template
+    <
+        std::size_t w,
+        boost::uint_least32_t q,
+        boost::uint_least32_t a,
+        boost::uint_least32_t ds,
+        boost::uint_least32_t dt
+    >
     struct M6
     {
         template<class T>
