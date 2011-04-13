@@ -35,7 +35,7 @@
 
 //! @cond hide_private
 namespace Detail {
-    template<class UIntType, unsigned N>
+    template<class UIntType, boost::uint_least32_t N>
     struct Left
     {
         static UIntType shift(UIntType a)
@@ -44,7 +44,7 @@ namespace Detail {
         }
     };
 
-    template<class UIntType, unsigned N>
+    template<class UIntType, boost::uint_least32_t N>
     struct Right
     {
         static UIntType shift(UIntType a)
@@ -102,7 +102,7 @@ namespace Detail {
         }
     };
 
-    template<unsigned a>
+    template<boost::uint_least32_t a>
     struct M4
     {
         template<class T>
@@ -117,7 +117,7 @@ namespace Detail {
         }
     };
 
-    template<int N, unsigned b>
+    template<int N, boost::uint_least32_t b>
     struct M5
     {
         template<class T>
@@ -127,7 +127,7 @@ namespace Detail {
         }
     };
 
-    template<std::size_t w, unsigned q, unsigned a, unsigned ds, unsigned dt>
+    template<std::size_t w, boost::uint_least32_t q, boost::uint_least32_t a, boost::uint_least32_t ds, boost::uint_least32_t dt>
     struct M6
     {
         template<class T>
@@ -215,7 +215,7 @@ namespace Detail {
         }
     };
 
-    template<unsigned b, unsigned c>
+    template<boost::uint_least32_t b, boost::uint_least32_t c>
     struct MatsumotoKuritaTempering
     {
         template<std::size_t r, class UIntType, std::size_t N>
@@ -228,7 +228,7 @@ namespace Detail {
         }
     };
 
-    template<unsigned mask>
+    template<boost::uint_least32_t mask>
     struct HaraseTempering
     {
         template<std::size_t r, class UIntType, std::size_t N>
@@ -284,7 +284,8 @@ template
 class Well
 {
     BOOST_STATIC_ASSERT(!std::numeric_limits<UIntType>::is_signed);
-    BOOST_STATIC_ASSERT(w <= std::numeric_limits<UIntType>::digits);
+    BOOST_STATIC_ASSERT(w <= 
+            static_cast<std::size_t>(std::numeric_limits<UIntType>::digits));
     BOOST_STATIC_ASSERT(r > 0 && p < w);
     BOOST_STATIC_ASSERT(m1 > 0 && m1 < r);
     BOOST_STATIC_ASSERT(m2 > 0 && m2 < r);
