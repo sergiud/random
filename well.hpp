@@ -284,7 +284,7 @@ template
 class Well
 {
     BOOST_STATIC_ASSERT(!std::numeric_limits<UIntType>::is_signed);
-    BOOST_STATIC_ASSERT(w <= 
+    BOOST_STATIC_ASSERT(w <=
             static_cast<std::size_t>(std::numeric_limits<UIntType>::digits));
     BOOST_STATIC_ASSERT(r > 0 && p < w);
     BOOST_STATIC_ASSERT(m1 > 0 && m1 < r);

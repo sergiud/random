@@ -42,7 +42,7 @@ public:
 
     template<class UniformRandomNumberGenerator>
     result_type operator()(UniformRandomNumberGenerator& u, result_type s)
-    {          
+    {
         return s - exp_(u);
     }
 
@@ -72,8 +72,8 @@ public:
     }
 
     template<class E, class T>
-    friend std::basic_ostream<E, T>& 
-        operator<<(std::basic_ostream<E, T>& out, 
+    friend std::basic_ostream<E, T>&
+        operator<<(std::basic_ostream<E, T>& out,
                    const HomogeneousPoissonProcess& hpp)
     {
         out << hpp.exp_;
@@ -81,8 +81,8 @@ public:
     }
 
     template<class E, class T>
-    friend std::basic_istream<E, T>& 
-        operator>>(std::basic_istream<E, T>& out, 
+    friend std::basic_istream<E, T>&
+        operator>>(std::basic_istream<E, T>& out,
         HomogeneousPoissonProcess& hpp)
     {
         in >> hpp.exp_;

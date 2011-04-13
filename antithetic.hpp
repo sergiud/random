@@ -16,7 +16,7 @@
 
 /**
  * @brief Antithetic variate used for variance reduction.
- * 
+ *
  * @tparam UniformRandomNumberGenerator The engine that generates uniformly
  *         distributed random numbers.
  */
@@ -30,8 +30,8 @@ class Antithetic
 {
     bool toggle_;
     UniformRandomNumberGenerator generator_;
-    
-    typedef typename 
+
+    typedef typename
         boost::remove_reference<UniformRandomNumberGenerator>::type Engine;
 
 public:
@@ -41,7 +41,7 @@ private:
     result_type value_;
 
 public:
-    Antithetic(typename 
+    Antithetic(typename
                boost::call_traits<UniformRandomNumberGenerator>::param_type u)
         : toggle_(false)
         , generator_(u)
@@ -74,7 +74,7 @@ public:
 
     bool operator==(const Antithetic& other) const
     {
-        return generator_ == generator_ && toggle_ == toggle_ && 
+        return generator_ == generator_ && toggle_ == toggle_ &&
             value_ == value_;
     }
 };
@@ -87,7 +87,7 @@ public:
  *         distributed random numbers.
  */
 template<class UniformRandomNumberGenerator>
-inline Antithetic<UniformRandomNumberGenerator> 
+inline Antithetic<UniformRandomNumberGenerator>
     make_antithetic(UniformRandomNumberGenerator& u)
 {
     return Antithetic<UniformRandomNumberGenerator>(u);
