@@ -34,231 +34,235 @@
 #include <boost/static_assert.hpp>
 
 //! @cond hide_private
+
 namespace Detail {
-    template<class UIntType, unsigned N>
-    struct Left
-    {
-        static UIntType shift(UIntType a)
-        {
-            return a << N;
-        }
-    };
 
-    template<class UIntType, unsigned N>
-    struct Right
+template<class UIntType, unsigned N>
+struct Left
+{
+    static UIntType shift(UIntType a)
     {
-        static UIntType shift(UIntType a)
-        {
-            return a >> N;
-        }
-    };
-
-    template<int N, class UIntType>
-    inline UIntType shift(UIntType a)
-    {
-        return boost::mpl::if_c<(N < 0),
-                    Left<UIntType, -N>,
-                    Right<UIntType, N>
-               >::type::shift(a);
+        return a << N;
     }
+};
 
-    // Transformation matrices M0,...,M6 from Table I
-
-    struct M0
+template<class UIntType, unsigned N>
+struct Right
+{
+    static UIntType shift(UIntType a)
     {
-        template<class T>
-        static T transform(T)
-        {
-            return T(0);
-        }
-    };
+        return a >> N;
+    }
+};
 
-    struct M1
+template<int N, class UIntType>
+inline UIntType shift(UIntType a)
+{
+    return boost::mpl::if_c<(N < 0),
+                Left<UIntType, -N>,
+                Right<UIntType, N>
+            >::type::shift(a);
+}
+
+// Transformation matrices M0,...,M6 from Table I
+
+struct M0
+{
+    template<class T>
+    static T transform(T)
     {
-        template<class T>
-        static T transform(T x)
-        {
-            return x;
-        }
-    };
+        return T(0);
+    }
+};
 
-    template<int N>
-    struct M2
+struct M1
+{
+    template<class T>
+    static T transform(T x)
     {
-        template<class T>
-        static T transform(T x)
-        {
-            return shift<N>(x);
-        }
-    };
+        return x;
+    }
+};
 
-    template<int N>
-    struct M3
+template<int N>
+struct M2
+{
+    template<class T>
+    static T transform(T x)
     {
-        template<class T>
-        static T transform(T x)
-        {
-            return x ^ shift<N>(x);
-        }
-    };
+        return shift<N>(x);
+    }
+};
 
-    template<boost::uint_least32_t a>
-    struct M4
+template<int N>
+struct M3
+{
+    template<class T>
+    static T transform(T x)
     {
-        template<class T>
-        static T transform(T x)
-        {
-            T result = x >> 1;
+        return x ^ shift<N>(x);
+    }
+};
 
-            if ((x & 1) == 1)
-                result ^= a;
-
-            return result;
-        }
-    };
-
-    template<int N, boost::uint_least32_t b>
-    struct M5
+template<boost::uint_least32_t a>
+struct M4
+{
+    template<class T>
+    static T transform(T x)
     {
-        template<class T>
-        static T transform(T x)
-        {
-            return x ^ (shift<N>(x) & b);
-        }
-    };
+        T result = x >> 1;
 
-    template
-    <
-        std::size_t w,
-        boost::uint_least32_t q,
-        boost::uint_least32_t a,
-        boost::uint_least32_t ds,
-        boost::uint_least32_t dt
-    >
-    struct M6
+        if ((x & 1) == 1)
+            result ^= a;
+
+        return result;
+    }
+};
+
+template<int N, boost::uint_least32_t b>
+struct M5
+{
+    template<class T>
+    static T transform(T x)
     {
-        template<class T>
-        static T transform(T x)
-        {
-            T result = ((x << q) ^ (x >> (w - q))) & ds;
+        return x ^ (shift<N>(x) & b);
+    }
+};
 
-            if ((x & dt) != 0)
-                result ^= a;
+template
+<
+    std::size_t w,
+    boost::uint_least32_t q,
+    boost::uint_least32_t a,
+    boost::uint_least32_t ds,
+    boost::uint_least32_t dt
+>
+struct M6
+{
+    template<class T>
+    static T transform(T x)
+    {
+        T result = ((x << q) ^ (x >> (w - q))) & ds;
 
-            return result;
-        }
-    };
+        if ((x & dt) != 0)
+            result ^= a;
 
+        return result;
+    }
+};
+
+/**
+ * Conditional expression of type (r & (r - 1)) == 0 which allows to check
+ * whether a number r is of type 2^n.
+ */
+typedef boost::mpl::equal_to<
+            boost::mpl::bitand_<
+                boost::mpl::_,
+                boost::mpl::minus<boost::mpl::_, boost::mpl::int_<1>
+            >
+        >,
+        boost::mpl::int_<0>
+    > IsPowerOfTwo;
+
+template<class UIntType, UIntType r>
+struct Power2Modulo
+{
+    typedef typename boost::mpl::apply<
+            IsPowerOfTwo,
+            boost::mpl::integral_c<UIntType, r>
+        >::type type;
+
+    BOOST_STATIC_ASSERT(type::value);
+
+    template<class T>
+    static T calc(T value)
+    {
+        return value & (r - 1);
+    }
+};
+
+template<class UIntType, UIntType r>
+struct GenericModulo
+{
     /**
-     * Conditional expression of type (r & (r - 1)) == 0 which allows to check
-     * whether a number r is of type 2^n.
+     * @brief Determines @a value modulo @a r.
+     *
+     * @pre value >= 0 and value < 2 * r
+     * @post value >= 0 and value < r
      */
-    typedef boost::mpl::equal_to<
-                    boost::mpl::bitand_<
-                        boost::mpl::_,
-                        boost::mpl::minus<boost::mpl::_, boost::mpl::int_<1>
-                    >
-                >,
-                boost::mpl::int_<0>
-            > IsPowerOfTwo;
-
-    template<class UIntType, UIntType r>
-    struct Power2Modulo
+    template<class T>
+    static T calc(T value)
     {
-        typedef typename boost::mpl::apply<
-                                IsPowerOfTwo,
-                                boost::mpl::integral_c<UIntType, r>
-                            >::type type;
+        BOOST_STATIC_ASSERT(!std::numeric_limits<UIntType>::is_signed);
+        assert(value < 2 * r);
 
-        BOOST_STATIC_ASSERT(type::value);
+        if (value >= r)
+            value -= r;
 
-        template<class T>
-        static T calc(T value)
-        {
-            return value & (r - 1);
-        }
-    };
+        return value;
+    }
+};
 
-    template<class UIntType, UIntType r>
-    struct GenericModulo
+template<class UIntType, UIntType r>
+struct Modulo
+{
+    typedef typename boost::mpl::apply<
+            IsPowerOfTwo,
+            boost::mpl::integral_c<UIntType, r>
+        >::type rIsPowerOfTwo;
+
+    static UIntType calc(UIntType value)
     {
-        /**
-         * Determines @a value modulo @a r.
-         *
-         * @pre value >= 0 and value < 2 * r
-         * @post value >= 0 and value < r
-         */
-        template<class T>
-        static T calc(T value)
-        {
-            BOOST_STATIC_ASSERT(!std::numeric_limits<UIntType>::is_signed);
-            assert(value < 2 * r);
+        // Use the bitwise and for power 2 modulo arithmetic or subtraction
+        // otherwise. Subtraction is about two times faster than direct modulo
+        // calculation.
+        return boost::mpl::if_<
+                    rIsPowerOfTwo,
+                        Power2Modulo<UIntType, r>,
+                        GenericModulo<UIntType, r>
+                >::type::calc(value);
+    }
+};
 
-            if (value >= r)
-                value -= r;
-
-            return value;
-        }
-    };
-
-    template<class UIntType, UIntType r>
-    struct Modulo
+template<boost::uint_least32_t b, boost::uint_least32_t c>
+struct MatsumotoKuritaTempering
+{
+    template<std::size_t r, class UIntType, std::size_t N>
+    static UIntType apply(UIntType x, UIntType (&)[N], std::size_t)
     {
-        typedef typename boost::mpl::apply<
-                                IsPowerOfTwo,
-                                boost::mpl::integral_c<UIntType, r>
-                            >::type rIsPowerOfTwo;
+        x ^= (x << 7) & b;
+        x ^= (x << 15) & c;
 
-        static UIntType calc(UIntType value)
-        {
-            // Use the bitwise and for power 2 modulo arithmetic or subtraction
-            // otherwise. Subtraction is about two times faster than direct
-            // modulo calculation.
-            return boost::mpl::if_<
-                        rIsPowerOfTwo,
-                            Power2Modulo<UIntType, r>,
-                            GenericModulo<UIntType, r>
-                    >::type::calc(value);
-        }
-    };
+        return x;
+    }
+};
 
-    template<boost::uint_least32_t b, boost::uint_least32_t c>
-    struct MatsumotoKuritaTempering
+template<boost::uint_least32_t mask>
+struct HaraseTempering
+{
+    template<std::size_t r, class UIntType, std::size_t N>
+    static UIntType apply(UIntType x, UIntType (&s)[N], std::size_t m2)
     {
-        template<std::size_t r, class UIntType, std::size_t N>
-        static UIntType apply(UIntType x, UIntType (&)[N], std::size_t)
-        {
-            x ^= (x << 7) & b;
-            x ^= (x << 15) & c;
+        return x ^ (s[Modulo<UIntType, r>::calc(m2 + 1)] & mask);
+    }
+};
 
-            return x;
-        }
-    };
-
-    template<boost::uint_least32_t mask>
-    struct HaraseTempering
+struct NoTempering
+{
+    template<std::size_t r, class UIntType, std::size_t N>
+    static UIntType apply(UIntType x, UIntType (&)[N], std::size_t)
     {
-        template<std::size_t r, class UIntType, std::size_t N>
-        static UIntType apply(UIntType x, UIntType (&s)[N], std::size_t m2)
-        {
-            return x ^ (s[Modulo<UIntType, r>::calc(m2 + 1)] & mask);
-        }
-    };
+        return x;
+    }
+};
 
-    struct NoTempering
-    {
-        template<std::size_t r, class UIntType, std::size_t N>
-        static UIntType apply(UIntType x, UIntType (&)[N], std::size_t)
-        {
-            return x;
-        }
-    };
 } // namespace Detail
+
 //! @endcond
 
 /**
  * @brief Well-Equidistributed Long-period Linear (WELL) pseudo-random number
- * generator.
+ *        generator.
  *
  * The WELL pseudo-random number generator has been characterized in "Improved
  * Long-Period Generators Based on Linear Recurrences Modulo 2", by Francois
@@ -342,7 +346,7 @@ public:
         UIntType *const s = state_;
 
         // Same generator used to seed Mersenne twister
-        for ( ; i < state_size; ++i)
+        for ( ; i != state_size; ++i)
             s[i] = (1812433253U * (s[i - 1] ^ (s[i - 1] >> (w - 2))) + i);
 
         index_ = i;
@@ -354,10 +358,10 @@ public:
         index_ = 0;
         std::size_t i = 0;
 
-        for ( ; i < r && first != last; ++i, ++first)
+        for ( ; i != state_size && first != last; ++i, ++first)
             state_[i] = *first;
 
-        if (first == last && i < state_size)
+        if (first == last && i != state_size)
             throw std::invalid_argument("Seed sequence too short");
     }
 
@@ -416,7 +420,7 @@ public:
 
     friend bool operator==(const Well& lhs, const Well& rhs)
     {
-        for (std::size_t i = 0; i < state_size; ++i)
+        for (std::size_t i = 0; i != state_size; ++i)
             if (lhs.compute(i) != rhs.compute(i))
                 return false;
 
@@ -429,22 +433,22 @@ public:
     }
 
     template<class E, class T>
-    friend std::basic_ostream<E, T>& operator<<(std::basic_ostream<E, T>& out,
-                                                const Well& well)
+    friend std::basic_ostream<E, T>&
+        operator<<(std::basic_ostream<E, T>& out, const Well& well)
     {
         E space = out.widen(' ');
 
-        for (std::size_t i = 0; i < state_size; ++i)
+        for (std::size_t i = 0; i != state_size; ++i)
             out << well.compute(i) << space;
 
         return out;
     }
 
     template<class E, class T>
-    friend std::basic_istream<E, T>& operator>>(std::basic_istream<E, T>& in,
-                                                Well& well)
+    friend std::basic_istream<E, T>&
+        operator>>(std::basic_istream<E, T>& in, Well& well)
     {
-        for (std::size_t i = 0; i < state_size; ++i)
+        for (std::size_t i = 0; i != state_size; ++i)
             in >> well.state_[i] >> std::ws;
 
         well.index_ = state_size;
@@ -497,95 +501,97 @@ const UIntType Well<UIntType, w, r, p, m1, m2, m3, T0, T1, T2, T3, T4, T5, T6,
 #endif // BOOST_NO_INCLASS_MEMBER_INITIALIZATION
 
 namespace Detail {
-    // Base definitions with pluggable tempering method
 
-    template
-    <
-        class UIntType,
-        std::size_t w,
-        std::size_t r,
-        std::size_t p,
-        std::size_t m1,
-        std::size_t m2,
-        std::size_t m3,
-        class T0,
-        class T1,
-        class T2,
-        class T3,
-        class T4,
-        class T5,
-        class T6,
-        class T7
-    >
-    struct Well_quoted
+// Base definitions with pluggable tempering method
+
+template
+<
+    class UIntType,
+    std::size_t w,
+    std::size_t r,
+    std::size_t p,
+    std::size_t m1,
+    std::size_t m2,
+    std::size_t m3,
+    class T0,
+    class T1,
+    class T2,
+    class T3,
+    class T4,
+    class T5,
+    class T6,
+    class T7
+>
+struct Well_quoted
+{
+    template<class T>
+    struct apply
     {
-        template<class T>
-        struct apply
-        {
-            typedef Well<UIntType, w, r, p, m1, m2, m3, T0, T1, T2, T3, T4, T5,
-                T6, T7, T> type;
-        };
+        typedef Well<UIntType, w, r, p, m1, m2, m3, T0, T1, T2, T3, T4, T5, T6,
+            T7, T> type;
     };
+};
 
-    typedef Well_quoted<boost::uint32_t, 32, 16, 0, 13, 9, 5,
-        M3<-16>, M3<-15>, M3<11>, M0, M3<-2>, M3<-18>, M2<-28>,
-        M5<-5, 0xda442d24> > Well512a_base;
+typedef Well_quoted<boost::uint32_t, 32, 16, 0, 13, 9, 5,
+    M3<-16>, M3<-15>, M3<11>, M0, M3<-2>, M3<-18>, M2<-28>,
+    M5<-5, 0xda442d24> > Well512a_base;
 
-    typedef Well_quoted<boost::uint32_t, 32, 17, 23, 13, 11, 10,
-        M3<-13>, M3<-15>, M1, M2<-21>, M3<-13>, M2<1>, M0, M3<11> >
-        Well521a_base;
+typedef Well_quoted<boost::uint32_t, 32, 17, 23, 13, 11, 10,
+    M3<-13>, M3<-15>, M1, M2<-21>, M3<-13>, M2<1>, M0, M3<11> >
+    Well521a_base;
 
-    typedef Well_quoted<boost::uint32_t, 32, 17, 23, 11, 10, 7,
-        M3<-21>, M3<6>, M0, M3<-13>, M3<13>, M2<-10>, M2<-5>, M3<13> >
-        Well521b_base;
+typedef Well_quoted<boost::uint32_t, 32, 17, 23, 11, 10, 7,
+    M3<-21>, M3<6>, M0, M3<-13>, M3<13>, M2<-10>, M2<-5>, M3<13> >
+    Well521b_base;
 
-    typedef Well_quoted<boost::uint32_t, 32, 19, 1, 16, 15, 14,
-        M3<19>, M3<11>, M3<-14>, M1, M3<18>, M1, M0, M3<-5> > Well607a_base;
+typedef Well_quoted<boost::uint32_t, 32, 19, 1, 16, 15, 14,
+    M3<19>, M3<11>, M3<-14>, M1, M3<18>, M1, M0, M3<-5> > Well607a_base;
 
-    typedef Well_quoted<boost::uint32_t, 32, 19, 1, 16, 18, 13,
-        M3<-18>, M3<-14>, M0, M3<18>, M3<-24>, M3<5>, M3<-1>, M0>
-        Well607b_base;
+typedef Well_quoted<boost::uint32_t, 32, 19, 1, 16, 18, 13,
+    M3<-18>, M3<-14>, M0, M3<18>, M3<-24>, M3<5>, M3<-1>, M0>
+    Well607b_base;
 
-    typedef Well_quoted<boost::uint32_t, 32, 25, 0, 14, 18, 17,
-        M1, M3<-15>, M3<10>, M3<-11>, M3<16>, M2<20>, M1, M3<-28> >
-        Well800a_base;
+typedef Well_quoted<boost::uint32_t, 32, 25, 0, 14, 18, 17,
+    M1, M3<-15>, M3<10>, M3<-11>, M3<16>, M2<20>, M1, M3<-28> >
+    Well800a_base;
 
-    typedef Well_quoted<boost::uint32_t, 32, 25, 0, 9, 4, 22,
-        M3<-29>, M2<-14>, M1, M2<19>, M1, M3<10>, M4<0xd3e43ffd>, M3<-25> >
-        Well800b_base;
+typedef Well_quoted<boost::uint32_t, 32, 25, 0, 9, 4, 22,
+    M3<-29>, M2<-14>, M1, M2<19>, M1, M3<10>, M4<0xd3e43ffd>, M3<-25> >
+    Well800b_base;
 
-    typedef Well_quoted<boost::uint32_t, 32, 32, 0, 3, 24, 10,
-        M1, M3<8>, M3<-19>, M3<-14>, M3<-11>, M3<-7>, M3<-13>, M0>
-        Well1024a_base;
+typedef Well_quoted<boost::uint32_t, 32, 32, 0, 3, 24, 10,
+    M1, M3<8>, M3<-19>, M3<-14>, M3<-11>, M3<-7>, M3<-13>, M0>
+    Well1024a_base;
 
-    typedef Well_quoted<boost::uint32_t, 32, 32, 0, 22, 25, 26,
-        M3<-21>, M3<17>, M4<0x8bdcb91e>, M3<15>, M3<-14>, M3<-21>, M1, M0>
-        Well1024b_base;
+typedef Well_quoted<boost::uint32_t, 32, 32, 0, 22, 25, 26,
+    M3<-21>, M3<17>, M4<0x8bdcb91e>, M3<15>, M3<-14>, M3<-21>, M1, M0>
+    Well1024b_base;
 
-    typedef Well_quoted<boost::uint32_t, 32, 624, 31, 70, 179, 449,
-        M3<-25>, M3<27>, M2<9>, M3<1>, M1, M3<-9>, M3<-21>, M3<21> >
-        Well19937a_base;
+typedef Well_quoted<boost::uint32_t, 32, 624, 31, 70, 179, 449,
+    M3<-25>, M3<27>, M2<9>, M3<1>, M1, M3<-9>, M3<-21>, M3<21> >
+    Well19937a_base;
 
-    typedef Well_quoted<boost::uint32_t, 32, 624, 31, 203, 613, 123,
-        M3<7>, M1, M3<12>, M3<-10>, M3<-19>, M2<-11>, M3<4>, M3<-10> >
-        Well19937b_base;
+typedef Well_quoted<boost::uint32_t, 32, 624, 31, 203, 613, 123,
+    M3<7>, M1, M3<12>, M3<-10>, M3<-19>, M2<-11>, M3<4>, M3<-10> >
+    Well19937b_base;
 
-    typedef Well_quoted<boost::uint32_t, 32, 679, 27, 151, 327, 84,
-        M1, M3<-26>, M3<19>, M0, M3<27>, M3<-11>,
-        M6<32, 15, 0x86a9d87e, 0xffffffef, 0x00200000>, M3<-16> >
-        Well21701a_base;
+typedef Well_quoted<boost::uint32_t, 32, 679, 27, 151, 327, 84,
+    M1, M3<-26>, M3<19>, M0, M3<27>, M3<-11>,
+    M6<32, 15, 0x86a9d87e, 0xffffffef, 0x00200000>, M3<-16> >
+    Well21701a_base;
 
-    typedef Well_quoted<boost::uint32_t, 32, 726, 23, 667, 43, 462,
-        M3<28>, M1, M3<18>, M3<3>, M3<21>, M3<-17>, M3<-28>, M3<-1> >
-        Well23209a_base;
+typedef Well_quoted<boost::uint32_t, 32, 726, 23, 667, 43, 462,
+    M3<28>, M1, M3<18>, M3<3>, M3<21>, M3<-17>, M3<-28>, M3<-1> >
+    Well23209a_base;
 
-    typedef Well_quoted<boost::uint32_t, 32, 726, 23, 610, 175, 662,
-        M4<0xa8c296d1>, M1, M6<32, 15, 0x5d6b45cc, 0xfffeffff, 0x00000002>,
-        M3<-24>, M3<-26>, M1, M0, M3<16> > Well23209b_base;
+typedef Well_quoted<boost::uint32_t, 32, 726, 23, 610, 175, 662,
+    M4<0xa8c296d1>, M1, M6<32, 15, 0x5d6b45cc, 0xfffeffff, 0x00000002>,
+    M3<-24>, M3<-26>, M1, M0, M3<16> > Well23209b_base;
 
-    typedef Well_quoted<boost::uint32_t, 32, 1391, 15, 23, 481, 229,
-        M3<-24>, M3<30>, M3<-10>, M2<-26>, M1, M3<20>,
-        M6<32, 9, 0xb729fcec, 0xfbffffff, 0x00020000>, M1> Well44497a_base;
+typedef Well_quoted<boost::uint32_t, 32, 1391, 15, 23, 481, 229,
+    M3<-24>, M3<30>, M3<-10>, M2<-26>, M1, M3<20>,
+    M6<32, 9, 0xb729fcec, 0xfbffffff, 0x00020000>, M1> Well44497a_base;
+
 } // namespace Detail
 
 typedef boost::mpl::apply1<Detail::Well512a_base,
