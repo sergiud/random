@@ -11,6 +11,7 @@
 #ifndef ANTITHETIC_HPP
 #define ANTITHETIC_HPP
 
+#include <boost/call_traits.hpp>
 #include <boost/operators.hpp>
 #include <boost/type_traits/remove_reference.hpp>
 
