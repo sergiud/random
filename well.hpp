@@ -64,7 +64,10 @@ inline UIntType shift(UIntType a)
             >::type::shift(a);
 }
 
-// Transformation matrices M0,...,M6 from Table I
+/**
+ * @name Transformation matrices @f$M0,\dotsc,M6@f$ from Table I
+ * @{
+ */
 
 struct M0
 {
@@ -151,9 +154,11 @@ struct M6
     }
 };
 
+//! @}
+
 /**
  * Conditional expression of type (r & (r - 1)) == 0 which allows to check
- * whether a number r is of type 2^n.
+ * whether a number @f$r@f$ is of type @f$2^n@f$.
  */
 typedef boost::mpl::equal_to<
             boost::mpl::bitand_<
@@ -264,10 +269,10 @@ struct NoTempering
  * @brief Well-Equidistributed Long-period Linear (WELL) pseudo-random number
  *        generator.
  *
- * The WELL pseudo-random number generator has been characterized in "Improved
- * Long-Period Generators Based on Linear Recurrences Modulo 2", by Francois
- * Panneton, Pierre L'Ecuyer and Makoto Matsumoto from ACM Transactions on
- * Mathematical Software, 32 (1, March) 2006, 1-16.
+ * The implementation is based on the "Improved Long-Period Generators Based on
+ * Linear Recurrences Modulo 2" paper by Francois Panneton, Pierre L'Ecuyer and
+ * Makoto Matsumoto from ACM Transactions on Mathematical Software, 32 (1,
+ * March) 2006, pp. 1-16.
  *
  * @tparam UIntType The unsigned integer type.
  * @tparam w Word size.
@@ -303,13 +308,23 @@ class Well
     BOOST_STATIC_ASSERT(m3 > 0 && m3 < r);
 
 public:
+    //! The unsigned integer type.
     typedef UIntType result_type;
 
+    //! Word size.
     BOOST_STATIC_CONSTANT(std::size_t, word_size = w);
+    //! State size.
     BOOST_STATIC_CONSTANT(std::size_t, state_size = r);
+    //! Number of mask bits.
     BOOST_STATIC_CONSTANT(std::size_t, mask_bits = p);
+    //! Default seed value.
     BOOST_STATIC_CONSTANT(UIntType, default_seed = 5489U);
 
+    /**
+     * @brief Initializes the class using the specified seed @a value.
+     *
+     * @param value The seed value to be used for state initialization.
+     */
     explicit Well(result_type value = default_seed)
     {
         seed(value);
@@ -365,6 +380,9 @@ public:
             throw std::invalid_argument("Seed sequence too short");
     }
 
+    /**
+     * @brief Generates a random number.
+     */
     result_type operator()()
     {
         const UIntType upper_mask = ~0U << p;
@@ -418,6 +436,9 @@ public:
         }
     }
 
+    /**
+     * @brief Compares the state of two generators for equality.
+     */
     friend bool operator==(const Well& lhs, const Well& rhs)
     {
         for (std::size_t i = 0; i != state_size; ++i)
@@ -427,11 +448,17 @@ public:
         return true;
     }
 
+    /**
+     * @brief Compares the state of two generators for inequality.
+     */
     friend bool operator!=(const Well& lhs, const Well& rhs)
     {
         return !(lhs == rhs);
     }
 
+    /**
+     * @brief Writes the state to the specified stream.
+     */
     template<class E, class T>
     friend std::basic_ostream<E, T>&
         operator<<(std::basic_ostream<E, T>& out, const Well& well)
@@ -444,6 +471,9 @@ public:
         return out;
     }
 
+    /**
+     * @brief Reads the generator state from the specified input stream.
+     */
     template<class E, class T>
     friend std::basic_istream<E, T>&
         operator>>(std::basic_istream<E, T>& in, Well& well)
@@ -502,7 +532,10 @@ const UIntType Well<UIntType, w, r, p, m1, m2, m3, T0, T1, T2, T3, T4, T5, T6,
 
 namespace Detail {
 
-// Base definitions with pluggable tempering method
+/**
+ * @name Base definitions with pluggable tempering method
+ * @{
+ */
 
 template
 <
@@ -592,6 +625,8 @@ typedef Well_quoted<boost::uint32_t, 32, 1391, 15, 23, 481, 229,
     M3<-24>, M3<30>, M3<-10>, M2<-26>, M1, M3<20>,
     M6<32, 9, 0xb729fcec, 0xfbffffff, 0x00020000>, M1> Well44497a_base;
 
+//! @}
+
 } // namespace Detail
 
 typedef boost::mpl::apply1<Detail::Well512a_base,
@@ -629,7 +664,10 @@ typedef boost::mpl::apply1<Detail::Well44497a_base,
 typedef boost::mpl::apply1<Detail::Well44497a_base,
     Detail::MatsumotoKuritaTempering<0x93dd1400, 0xfa118000> >::type Well44497b;
 
-// Maximally equidistributed versions using Harase's tempering method
+/**
+ * @name Maximally equidistributed versions using Harase's tempering method
+ * @{
+ */
 
 typedef boost::mpl::apply1<Detail::Well800a_base,
     Detail::HaraseTempering<0x4880> >::type Well800a_ME;
@@ -647,5 +685,7 @@ typedef boost::mpl::apply1<Detail::Well23209b_base,
     Detail::HaraseTempering<0x34000300> >::type Well23209b_ME;
 typedef boost::mpl::apply1<Detail::Well44497a_base,
     Detail::HaraseTempering<0x48000000> >::type Well44497a_ME;
+
+//! @}
 
 #endif // WELL_HPP
