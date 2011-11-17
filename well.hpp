@@ -32,6 +32,7 @@
 #include <boost/mpl/placeholders.hpp>
 #include <boost/ref.hpp>
 #include <boost/static_assert.hpp>
+#include <boost/throw_exception.hpp>
 
 //! @cond hide_private
 
@@ -377,7 +378,8 @@ public:
             state_[i] = *first;
 
         if (first == last && i != state_size)
-            throw std::invalid_argument("Seed sequence too short");
+            BOOST_THROW_EXCEPTION
+                (std::invalid_argument("Seed sequence too short"));
     }
 
     /**
