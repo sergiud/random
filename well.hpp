@@ -1,10 +1,10 @@
-// Copyright (c) Sergiu Dotenco 2010, 2011
+// Copyright (c) Sergiu Dotenco 2010, 2011, 2012
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 /**
- * @brief Implementation of the Well-Equidistributed Long-period Linear (WELL)
+ * @brief Implementation of the Well Equidistributed Long-period Linear (WELL)
  *        pseudo-random number generator.
  * @file well.hpp
  */
@@ -219,7 +219,7 @@ struct Modulo
 
     static UIntType calc(UIntType value)
     {
-        // Use the bitwise and for power 2 modulo arithmetic or subtraction
+        // Use the bitwise AND for power 2 modulo arithmetic, or subtraction
         // otherwise. Subtraction is about two times faster than direct modulo
         // calculation.
         return boost::mpl::if_<
@@ -267,7 +267,7 @@ struct NoTempering
 //! @endcond
 
 /**
- * @brief Well-Equidistributed Long-period Linear (WELL) pseudo-random number
+ * @brief Well Equidistributed Long-period Linear (WELL) pseudo-random number
  *        generator.
  *
  * The implementation is based on the "Improved Long-Period Generators Based on
