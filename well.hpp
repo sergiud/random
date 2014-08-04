@@ -380,7 +380,7 @@ public:
 
         // Same generator used to seed Mersenne twister
         for ( ; i != state_size; ++i)
-            s[i] = (1812433253U * (s[i - 1] ^ (s[i - 1] >> (w - 2))) + i);
+            s[i] = static_cast<UIntType>((1812433253U * (s[i - 1] ^ (s[i - 1] >> (w - 2))) + i));
 
         index_ = i;
     }
