@@ -84,20 +84,41 @@ public:
 #define DEFINE_TEST_CASE(name, type, expected) \
     BOOST_AUTO_TEST_CASE(name) { WellTestCase<type, expected>::run(); }
 
-DEFINE_TEST_CASE(WELL512a, Well512a, 0x2b3fe99e)
-DEFINE_TEST_CASE(WELL521a, Well521a, 0xc9878363)
-DEFINE_TEST_CASE(WELL521b, Well521b, 0xb75867f6)
-DEFINE_TEST_CASE(WELL607a, Well607a, 0x7b5043ea)
-DEFINE_TEST_CASE(WELL607b, Well607b, 0xaedee7da)
-DEFINE_TEST_CASE(WELL800a, Well800a, 0x2bfe686f)
-DEFINE_TEST_CASE(WELL800b, Well800b, 0xf009e1bd)
-DEFINE_TEST_CASE(WELL1024a, Well1024a, 0xd07f528c)
-DEFINE_TEST_CASE(WELL1024b, Well1024b, 0x867f7993)
-DEFINE_TEST_CASE(WELL19937a, Well19937a, 0xb33a2cd5)
-DEFINE_TEST_CASE(WELL19937b, Well19937b, 0x191de86a)
-DEFINE_TEST_CASE(WELL19937c, Well19937c, 0x243eaed5)
-DEFINE_TEST_CASE(WELL21701a, Well21701a, 0x7365a269)
-DEFINE_TEST_CASE(WELL23209a, Well23209a, 0x807dacb)
-DEFINE_TEST_CASE(WELL23209b, Well23209b, 0xf1a77751)
-DEFINE_TEST_CASE(WELL44497a, Well44497a, 0xfdd7c07b)
-DEFINE_TEST_CASE(WELL44497b, Well44497b, 0x9406547b)
+DEFINE_TEST_CASE(WELL512a, boost::random::well512a, 0x2b3fe99e)
+DEFINE_TEST_CASE(WELL521a, boost::random::well521a, 0xc9878363)
+DEFINE_TEST_CASE(WELL521b, boost::random::well521b, 0xb75867f6)
+DEFINE_TEST_CASE(WELL607a, boost::random::well607a, 0x7b5043ea)
+DEFINE_TEST_CASE(WELL607b, boost::random::well607b, 0xaedee7da)
+DEFINE_TEST_CASE(WELL800a, boost::random::well800a, 0x2bfe686f)
+DEFINE_TEST_CASE(WELL800b, boost::random::well800b, 0xf009e1bd)
+DEFINE_TEST_CASE(WELL1024a, boost::random::well1024a, 0xd07f528c)
+DEFINE_TEST_CASE(WELL1024b, boost::random::well1024b, 0x867f7993)
+DEFINE_TEST_CASE(WELL19937a, boost::random::well19937a, 0xb33a2cd5)
+DEFINE_TEST_CASE(WELL19937b, boost::random::well19937b, 0x191de86a)
+DEFINE_TEST_CASE(WELL19937c, boost::random::well19937c, 0x243eaed5)
+DEFINE_TEST_CASE(WELL21701a, boost::random::well21701a, 0x7365a269)
+DEFINE_TEST_CASE(WELL23209a, boost::random::well23209a, 0x807dacb)
+DEFINE_TEST_CASE(WELL23209b, boost::random::well23209b, 0xf1a77751)
+DEFINE_TEST_CASE(WELL44497a, boost::random::well44497a, 0xfdd7c07b)
+DEFINE_TEST_CASE(WELL44497b, boost::random::well44497b, 0x9406547b)
+
+BOOST_AUTO_TEST_CASE(abc)
+{
+    typedef boost::random::well512a RandomNumberGenerator;
+    RandomNumberGenerator rng;
+
+    unsigned state[RandomNumberGenerator::state_size] = {};
+    state[RandomNumberGenerator::state_size - 1] = 1;
+
+    unsigned* p = state;
+    rng.seed(p, boost::end(state));
+
+    unsigned x;
+
+    int iterations = 9999;
+
+    while (iterations-- > 0)
+        x = rng();
+
+    BOOST_CHECK_EQUAL(x, 0x4df08652U);
+}
