@@ -14,7 +14,6 @@
 #define BOOST_RANDOM_WELL_HPP
 
 #include <algorithm>
-#include <cassert>
 #include <cstddef>
 #include <iomanip>
 #include <istream>
@@ -22,6 +21,7 @@
 #include <ostream>
 #include <stdexcept>
 
+#include <boost/assert.hpp>
 #include <boost/config.hpp>
 #include <boost/cstdint.hpp>
 #include <boost/mpl/apply.hpp>
@@ -64,14 +64,17 @@ struct bitshift_right
     }
 };
 
-template<int N, class UIntType>
-inline UIntType bitshift(UIntType a)
+template<class UIntType, int_least32_t N>
+struct bitshift
 {
-    return mpl::if_c<(N < 0),
-                bitshift_left<UIntType, static_cast<uint_least32_t>(-N)>,
-                bitshift_right<UIntType, static_cast<uint_least32_t>(N)>
-            >::type::compute(a);
-}
+    static UIntType compute(UIntType a)
+    {
+        return mpl::if_c< (N < 0),
+            bitshift_left<UIntType, static_cast<uint_least32_t>(-N)>,
+            bitshift_right<UIntType, static_cast<uint_least32_t>(N)>
+        >::type::compute(a);
+    }
+};
 
 /**
  * @name Transformation matrices @f$M0,\dotsc,M6@f$ from Table I
@@ -102,7 +105,7 @@ struct M2
     template<class T>
     static T transform(T x)
     {
-        return bitshift<N>(x);
+        return bitshift<T, N>::compute(x);
     }
 };
 
@@ -112,7 +115,7 @@ struct M3
     template<class T>
     static T transform(T x)
     {
-        return x ^ bitshift<N>(x);
+        return x ^ bitshift<T, N>::compute(x);
     }
 };
 
@@ -137,7 +140,7 @@ struct M5
     template<class T>
     static T transform(T x)
     {
-        return x ^ (bitshift<N>(x) & b);
+        return x ^ (bitshift<T, N>::compute(x) & b);
     }
 };
 
@@ -189,7 +192,7 @@ struct power_of_two_modulo
             mpl::integral_c<UIntType, r>
         >::type type;
 
-    BOOST_STATIC_ASSERT(type::value);
+    BOOST_STATIC_ASSERT_MSG(type::value, "value is not power of two");
 
     template<class T>
     static T compute(T value)
@@ -211,7 +214,7 @@ struct generic_modulo
     static T compute(T value)
     {
         BOOST_STATIC_ASSERT(!std::numeric_limits<UIntType>::is_signed);
-        assert(value < 2 * r);
+        BOOST_ASSERT_MSG(value < 2 * r, "value out of range");
 
         if (value >= r)
             value -= r;
@@ -226,7 +229,7 @@ struct selective_modulo
     typedef typename mpl::apply<
             is_power_of_two,
             mpl::integral_c<UIntType, r>
-        >::type rIsPowerOfTwo;
+        >::type r_is_power_of_two;
 
     static UIntType compute(UIntType value)
     {
@@ -234,7 +237,7 @@ struct selective_modulo
         // otherwise. Subtraction is about two times faster than direct modulo
         // computation.
         return mpl::if_<
-                    rIsPowerOfTwo,
+                    r_is_power_of_two,
                         power_of_two_modulo<UIntType, r>,
                         generic_modulo<UIntType, r>
                 >::type::compute(value);
@@ -312,10 +315,12 @@ template
 >
 class well_engine
 {
-    BOOST_STATIC_ASSERT(!std::numeric_limits<UIntType>::is_signed);
-    BOOST_STATIC_ASSERT(w <=
-            static_cast<std::size_t>(std::numeric_limits<UIntType>::digits));
-    BOOST_STATIC_ASSERT(r > 0 && p < w);
+    BOOST_STATIC_ASSERT_MSG(!std::numeric_limits<UIntType>::is_signed, "UIntType must be unsigned");
+    BOOST_STATIC_ASSERT_MSG(w <=
+            static_cast<std::size_t>(std::numeric_limits<UIntType>::digits),
+            "Word size cannot be represented using UIntType");
+    BOOST_STATIC_ASSERT_MSG(r > 0, "State size must be non-zero");
+    BOOST_STATIC_ASSERT_MSG(p < w, "Number of mask bits cannot be greater than word size");
     BOOST_STATIC_ASSERT(m1 > 0 && m1 < r);
     BOOST_STATIC_ASSERT(m2 > 0 && m2 < r);
     BOOST_STATIC_ASSERT(m3 > 0 && m3 < r);
@@ -519,6 +524,8 @@ public:
     }
 
 private:
+    //! @cond show_private
+
     template<class T>
     static T mod(T value)
     {
@@ -537,7 +544,11 @@ private:
 
     UIntType state_[r];
     std::size_t index_;
+
+    //! @endcond
 };
+
+//! @cond show_private
 
 #ifndef BOOST_NO_INCLASS_MEMBER_INITIALIZATION
 template<class UIntType, std::size_t w, std::size_t r, std::size_t p,
@@ -562,10 +573,15 @@ const UIntType well_engine<UIntType, w, r, p, m1, m2, m3, T0, T1, T2, T3, T4, T5
       T7, Tempering>::default_seed;
 #endif // BOOST_NO_INCLASS_MEMBER_INITIALIZATION
 
+//! @endcond
+
+
+//! @cond hide_private
+
 namespace detail {
 
 /**
- * @name Base definitions with pluggable tempering method
+ * @name Base WELL definitions with pluggable tempering method
  * @{
  */
 
@@ -599,7 +615,7 @@ struct well_quoted
 
 typedef well_quoted<uint32_t, 32, 16, 0, 13, 9, 5,
     M3<-16>, M3<-15>, M3<11>, M0, M3<-2>, M3<-18>, M2<-28>,
-    M5<-5, 0xda442d24> > well512a_base;
+    M5<-5, 0xda442d24U> > well512a_base;
 
 typedef well_quoted<uint32_t, 32, 17, 23, 13, 11, 10,
     M3<-13>, M3<-15>, M1, M2<-21>, M3<-13>, M2<1>, M0, M3<11> >
@@ -621,7 +637,7 @@ typedef well_quoted<uint32_t, 32, 25, 0, 14, 18, 17,
     well800a_base;
 
 typedef well_quoted<uint32_t, 32, 25, 0, 9, 4, 22,
-    M3<-29>, M2<-14>, M1, M2<19>, M1, M3<10>, M4<0xd3e43ffd>, M3<-25> >
+    M3<-29>, M2<-14>, M1, M2<19>, M1, M3<10>, M4<0xd3e43ffdU>, M3<-25> >
     well800b_base;
 
 typedef well_quoted<uint32_t, 32, 32, 0, 3, 24, 10,
@@ -629,7 +645,7 @@ typedef well_quoted<uint32_t, 32, 32, 0, 3, 24, 10,
     well1024a_base;
 
 typedef well_quoted<uint32_t, 32, 32, 0, 22, 25, 26,
-    M3<-21>, M3<17>, M4<0x8bdcb91e>, M3<15>, M3<-14>, M3<-21>, M1, M0>
+    M3<-21>, M3<17>, M4<0x8bdcb91eU>, M3<15>, M3<-14>, M3<-21>, M1, M0>
     well1024b_base;
 
 typedef well_quoted<uint32_t, 32, 624, 31, 70, 179, 449,
@@ -642,7 +658,7 @@ typedef well_quoted<uint32_t, 32, 624, 31, 203, 613, 123,
 
 typedef well_quoted<uint32_t, 32, 679, 27, 151, 327, 84,
     M1, M3<-26>, M3<19>, M0, M3<27>, M3<-11>,
-    M6<32, 15, 27, 10, 0x86a9d87e>, M3<-16> >
+    M6<32, 15, 27, 10, 0x86a9d87eU>, M3<-16> >
     well21701a_base;
 
 typedef well_quoted<uint32_t, 32, 726, 23, 667, 43, 462,
@@ -650,16 +666,18 @@ typedef well_quoted<uint32_t, 32, 726, 23, 667, 43, 462,
     well23209a_base;
 
 typedef well_quoted<uint32_t, 32, 726, 23, 610, 175, 662,
-    M4<0xa8c296d1>, M1, M6<32, 15, 15, 30, 0x5d6b45cc>,
+    M4<0xa8c296d1U>, M1, M6<32, 15, 15, 30, 0x5d6b45ccU>,
     M3<-24>, M3<-26>, M1, M0, M3<16> > well23209b_base;
 
 typedef well_quoted<uint32_t, 32, 1391, 15, 23, 481, 229,
     M3<-24>, M3<30>, M3<-10>, M2<-26>, M1, M3<20>,
-    M6<32, 9, 5, 14, 0xb729fcec>, M1> well44497a_base;
+    M6<32, 9, 5, 14, 0xb729fcecU>, M1> well44497a_base;
 
 //! @}
 
 } // namespace detail
+
+//! @endcond
 
 typedef mpl::apply1<detail::well512a_base,
     detail::no_tempering>::type well512a;
@@ -684,7 +702,7 @@ typedef mpl::apply1<detail::well19937a_base,
 typedef mpl::apply1<detail::well19937b_base,
     detail::no_tempering>::type well19937b;
 typedef mpl::apply1<detail::well19937a_base,
-    detail::matsumoto_kurita_tempering<0xe46e1700, 0x9b868000> >::type well19937c;
+    detail::matsumoto_kurita_tempering<0xe46e1700U, 0x9b868000U> >::type well19937c;
 typedef mpl::apply1<detail::well21701a_base,
     detail::no_tempering>::type well21701a;
 typedef mpl::apply1<detail::well23209a_base,
@@ -694,29 +712,29 @@ typedef mpl::apply1<detail::well23209b_base,
 typedef mpl::apply1<detail::well44497a_base,
     detail::no_tempering>::type well44497a;
 typedef mpl::apply1<detail::well44497a_base,
-    detail::matsumoto_kurita_tempering<0x93dd1400, 0xfa118000> >::type well44497b;
+    detail::matsumoto_kurita_tempering<0x93dd1400U, 0xfa118000U> >::type well44497b;
 
 /**
- * @name Maximally equidistributed versions using Harase's tempering method
+ * @name Maximally equidistributed WELL versions using Harase's tempering method
  * @{
  */
 
 typedef mpl::apply1<detail::well800a_base,
-    detail::harase_tempering<0x4880> >::type well800a_maxequist;
+    detail::harase_tempering<0x4880U> >::type well800a_maxequist;
 typedef mpl::apply1<detail::well800b_base,
-    detail::harase_tempering<0x17030806> >::type well800b_maxequist;
+    detail::harase_tempering<0x17030806U> >::type well800b_maxequist;
 typedef mpl::apply1<detail::well19937a_base,
-    detail::harase_tempering<0x4118000> >::type well19937a_maxequist;
+    detail::harase_tempering<0x4118000U> >::type well19937a_maxequist;
 typedef mpl::apply1<detail::well19937b_base,
-    detail::harase_tempering<0x30200010> >::type well19937b_maxequist;
+    detail::harase_tempering<0x30200010U> >::type well19937b_maxequist;
 typedef mpl::apply1<detail::well21701a_base,
-    detail::harase_tempering<0x1002> >::type well21701a_maxequist;
+    detail::harase_tempering<0x1002U> >::type well21701a_maxequist;
 typedef mpl::apply1<detail::well23209a_base,
-    detail::harase_tempering<0x5100000> >::type well23209a_maxequist;
+    detail::harase_tempering<0x5100000U> >::type well23209a_maxequist;
 typedef mpl::apply1<detail::well23209b_base,
-    detail::harase_tempering<0x34000300> >::type well23209b_maxequist;
+    detail::harase_tempering<0x34000300U> >::type well23209b_maxequist;
 typedef mpl::apply1<detail::well44497a_base,
-    detail::harase_tempering<0x48000000> >::type well44497a_maxequist;
+    detail::harase_tempering<0x48000000U> >::type well44497a_maxequist;
 
 //! @}
 
