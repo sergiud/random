@@ -669,9 +669,21 @@ struct well_quoted
     };
 };
 
+namespace well_params {
+
+const boost::uint_least32_t a1 = 0xda442d24U;
+const boost::uint_least32_t a2 = 0xd3e43ffdU;
+const boost::uint_least32_t a3 = 0x8bdcb91eU;
+const boost::uint_least32_t a4 = 0x86a9d87eU;
+const boost::uint_least32_t a5 = 0xa8c296d1U;
+const boost::uint_least32_t a6 = 0x5d6b45ccU;
+const boost::uint_least32_t a7 = 0xb729fcecU;
+
+} // namespace well_params
+
 typedef well_quoted<uint32_t, 32, 16, 0, 13, 9, 5,
     M3<-16>, M3<-15>, M3<11>, M0, M3<-2>, M3<-18>, M2<-28>,
-    M5<-5, 0xda442d24U> > well512a_base;
+    M5<-5, well_params::a1> > well512a_base;
 
 typedef well_quoted<uint32_t, 32, 17, 23, 13, 11, 10,
     M3<-13>, M3<-15>, M1, M2<-21>, M3<-13>, M2<1>, M0, M3<11> >
@@ -693,7 +705,7 @@ typedef well_quoted<uint32_t, 32, 25, 0, 14, 18, 17,
     well800a_base;
 
 typedef well_quoted<uint32_t, 32, 25, 0, 9, 4, 22,
-    M3<-29>, M2<-14>, M1, M2<19>, M1, M3<10>, M4<0xd3e43ffdU>, M3<-25> >
+    M3<-29>, M2<-14>, M1, M2<19>, M1, M3<10>, M4<well_params::a2>, M3<-25> >
     well800b_base;
 
 typedef well_quoted<uint32_t, 32, 32, 0, 3, 24, 10,
@@ -701,7 +713,7 @@ typedef well_quoted<uint32_t, 32, 32, 0, 3, 24, 10,
     well1024a_base;
 
 typedef well_quoted<uint32_t, 32, 32, 0, 22, 25, 26,
-    M3<-21>, M3<17>, M4<0x8bdcb91eU>, M3<15>, M3<-14>, M3<-21>, M1, M0>
+    M3<-21>, M3<17>, M4<well_params::a3>, M3<15>, M3<-14>, M3<-21>, M1, M0>
     well1024b_base;
 
 typedef well_quoted<uint32_t, 32, 624, 31, 70, 179, 449,
@@ -714,7 +726,7 @@ typedef well_quoted<uint32_t, 32, 624, 31, 203, 613, 123,
 
 typedef well_quoted<uint32_t, 32, 679, 27, 151, 327, 84,
     M1, M3<-26>, M3<19>, M0, M3<27>, M3<-11>,
-    M6<32, 15, 27, 10, 0x86a9d87eU>, M3<-16> >
+    M6<32, 15, 27, 10, well_params::a4>, M3<-16> >
     well21701a_base;
 
 typedef well_quoted<uint32_t, 32, 726, 23, 667, 43, 462,
@@ -722,12 +734,12 @@ typedef well_quoted<uint32_t, 32, 726, 23, 667, 43, 462,
     well23209a_base;
 
 typedef well_quoted<uint32_t, 32, 726, 23, 610, 175, 662,
-    M4<0xa8c296d1U>, M1, M6<32, 15, 15, 30, 0x5d6b45ccU>,
+    M4<well_params::a5>, M1, M6<32, 15, 15, 30, well_params::a6>,
     M3<-24>, M3<-26>, M1, M0, M3<16> > well23209b_base;
 
 typedef well_quoted<uint32_t, 32, 1391, 15, 23, 481, 229,
     M3<-24>, M3<30>, M3<-10>, M2<-26>, M1, M3<20>,
-    M6<32, 9, 5, 14, 0xb729fcecU>, M1> well44497a_base;
+    M6<32, 9, 5, 14, well_params::a7>, M1> well44497a_base;
 
 //! @}
 
