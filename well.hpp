@@ -13,13 +13,11 @@
 #ifndef BOOST_RANDOM_WELL_HPP
 #define BOOST_RANDOM_WELL_HPP
 
-#include <algorithm>
 #include <cstddef>
 #include <iomanip>
 #include <istream>
 #include <limits>
 #include <ostream>
-#include <stdexcept>
 
 #include <boost/assert.hpp>
 #include <boost/config.hpp>
@@ -35,9 +33,7 @@
 #include <boost/random/detail/generator_seed_seq.hpp>
 #include <boost/random/detail/seed.hpp>
 #include <boost/random/detail/seed_impl.hpp>
-#include <boost/ref.hpp>
 #include <boost/static_assert.hpp>
-#include <boost/throw_exception.hpp>
 
 namespace boost {
 namespace random {
@@ -158,7 +154,7 @@ struct M6
     static T transform(T x)
     {
         // Set all bits to 1 except the (s+1)th bit. Ensure only w bits are used.
-        const T ds = (~0U >> (std::numeric_limits<T>::digits - w)) & ~(1 << (w - (s + 1)));
+        BOOST_CONSTEXPR_OR_CONST T ds = (~0U >> (std::numeric_limits<T>::digits - w)) & ~(1 << (w - (s + 1)));
 
         T result = ((x << q) ^ (x >> (w - q))) & ds;
 
@@ -194,8 +190,7 @@ struct power_of_two_modulo
 
     BOOST_STATIC_ASSERT_MSG(type::value, "value is not power of two");
 
-    template<class T>
-    static T compute(T value)
+    static UIntType compute(UIntType value)
     {
         return value & (r - 1);
     }
@@ -204,16 +199,17 @@ struct power_of_two_modulo
 template<class UIntType, UIntType r>
 struct generic_modulo
 {
+    BOOST_STATIC_ASSERT_MSG(!std::numeric_limits<UIntType>::is_signed,
+        "UIntType must be unsigned");
+
     /**
      * @brief Determines @a value modulo @a r.
      *
      * @pre value >= 0 and value < 2 * r
      * @post value >= 0 and value < r
      */
-    template<class T>
-    static T compute(T value)
+    static UIntType compute(UIntType value)
     {
-        BOOST_STATIC_ASSERT(!std::numeric_limits<UIntType>::is_signed);
         BOOST_ASSERT_MSG(value < 2 * r, "value out of range");
 
         if (value >= r)
@@ -247,7 +243,7 @@ struct selective_modulo
 template<uint_least32_t b, uint_least32_t c>
 struct matsumoto_kurita_tempering
 {
-    template<std::size_t r, class UIntType, std::size_t N>
+    template<class UIntType, std::size_t r, std::size_t N>
     static UIntType apply(UIntType x, UIntType (&)[N], std::size_t)
     {
         x ^= (x << 7) & b;
@@ -260,16 +256,16 @@ struct matsumoto_kurita_tempering
 template<uint_least32_t mask>
 struct harase_tempering
 {
-    template<std::size_t r, class UIntType, std::size_t N>
+    template<class UIntType, std::size_t r, std::size_t N>
     static UIntType apply(UIntType x, UIntType (&s)[N], std::size_t m2)
     {
-        return x ^ (s[selective_modulo<UIntType, r>::compute(m2 + 1)] & mask);
+        return x ^ (s[selective_modulo<std::size_t, r>::compute(m2 + 1)] & mask);
     }
 };
 
 struct no_tempering
 {
-    template<std::size_t r, class UIntType, std::size_t N>
+    template<class UIntType, std::size_t r, std::size_t N>
     static UIntType apply(UIntType x, UIntType (&)[N], std::size_t)
     {
         return x;
@@ -315,12 +311,14 @@ template
 >
 class well_engine
 {
-    BOOST_STATIC_ASSERT_MSG(!std::numeric_limits<UIntType>::is_signed, "UIntType must be unsigned");
+    BOOST_STATIC_ASSERT_MSG(!std::numeric_limits<UIntType>::is_signed,
+        "UIntType must be unsigned");
     BOOST_STATIC_ASSERT_MSG(w <=
-            static_cast<std::size_t>(std::numeric_limits<UIntType>::digits),
-            "Word size cannot be represented using UIntType");
-    BOOST_STATIC_ASSERT_MSG(r > 0, "State size must be non-zero");
-    BOOST_STATIC_ASSERT_MSG(p < w, "Number of mask bits cannot be greater than word size");
+        static_cast<std::size_t>(std::numeric_limits<UIntType>::digits),
+            "word size cannot be represented using UIntType");
+    BOOST_STATIC_ASSERT_MSG(r > 0, "state size must be non-zero");
+    BOOST_STATIC_ASSERT_MSG(p < w,
+        "number of mask bits cannot be greater than word size");
     BOOST_STATIC_ASSERT(m1 > 0 && m1 < r);
     BOOST_STATIC_ASSERT(m2 > 0 && m2 < r);
     BOOST_STATIC_ASSERT(m3 > 0 && m3 < r);
@@ -337,13 +335,20 @@ public:
     BOOST_STATIC_CONSTANT(std::size_t, mask_bits = p);
     //! Default seed value.
     BOOST_STATIC_CONSTANT(UIntType, default_seed = 5489U);
+    BOOST_STATIC_CONSTANT(bool, has_fixed_range = false);
 
     /**
-     * @brief Initializes the class using the specified seed @a value.
-     *
-     * @param value The seed value to be used for state initialization.
+     * Constructs a @c mersenne_twister_engine and calls @c seed().
      */
-    explicit well_engine(result_type value = default_seed)
+    well_engine()
+    {
+        seed();
+    }
+
+    /**
+     * Constructs a @c mersenne_twister_engine and calls @c seed(value).
+     */
+    BOOST_RANDOM_DETAIL_ARITHMETIC_CONSTRUCTOR(well_engine, UIntType, value)
     {
         seed(value);
     }
@@ -354,49 +359,89 @@ public:
         seed(first, last);
     }
 
-    template<class Generator>
-    explicit well_engine(Generator& g)
+    /**
+    * Constructs a well_engine and calls @c seed(gen).
+    *
+    * @xmlnote
+    * The copy constructor will always be preferred over
+    * the templated constructor.
+    * @endxmlnote
+    */
+    BOOST_RANDOM_DETAIL_SEED_SEQ_CONSTRUCTOR(well_engine, SeedSeq, seq)
     {
-        seed(g);
+        seed(seq);
     }
 
-    template<class Generator>
-    void seed(Generator& g)
+    /**
+    * Seeds a well_engine using values produced by seq.generate().
+    */
+    BOOST_RANDOM_DETAIL_SEED_SEQ_SEED(well_engine, SeedSeq, seq)
     {
-        // Ensure std::generate_n doesn't copy the generator g by using
-        // reference_wrapper
-        std::generate_n(state_, state_size, ref(g));
+        detail::seed_array_int<w>(seq, state_);
+        index_ = state_size;
+
+        // fix up the state if it's all zeros.
+        if ((state_[0] & (~static_cast<UIntType>(0) << mask_bits)) == 0) {
+            for (std::size_t j = 1; j != state_size; ++j) {
+                if (state_[j] != 0)
+                    return;
+            }
+
+            state_[0] = static_cast<UIntType>(1) << (w - 1);
+        }
     }
 
-    void seed(result_type value = default_seed)
+    /**
+    * Sets the state x(0) to v mod 2w. Then, iteratively,
+    * sets x(i) to
+    * (i + f * (x(i-1) xor (x(i-1) rshift w-2))) mod 2<sup>w</sup>
+    * for i = 1 .. n-1. x(n) is the first value to be returned by operator().
+    */
+    BOOST_RANDOM_DETAIL_ARITHMETIC_SEED(well_engine, UIntType, value)
     {
-        if (value == 0U)
-            value = default_seed;
+        // New seeding algorithm from 
+        // http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/MT2002/emt19937ar.html
+        // In the previous versions, MSBs of the seed affected only MSBs of the
+        // state x[].
+        const UIntType mask = (max)();
 
-        state_[0] = value;
-
+        state_[0] = value & mask;
+        
         std::size_t i = 1;
-        UIntType (&s)[r] = state_;
+        UIntType (&s)[state_size] = state_;
 
-        // Same generator used to seed Mersenne twister
-        for ( ; i != state_size; ++i)
-            s[i] = static_cast<UIntType>((1812433253U * (s[i - 1] ^ (s[i - 1] >> (w - 2))) + i));
+        for ( ; i != state_size; ++i) {
+            // See Knuth "The Art of Computer Programming"
+            // Vol. 2, 3rd ed., page 106
+            s[i] = static_cast<UIntType>((1812433253U * (s[i - 1] ^ (s[i - 1] >> (w - 2))) + i) & mask);
+        }
 
         index_ = i;
+    }
+
+    /**
+     * Calls @c seed(default_seed).
+     */
+    void seed()
+    {
+        seed(default_seed);
     }
 
     template<class InputIterator>
     void seed(InputIterator& first, InputIterator last)
     {
-        index_ = 0;
-        std::size_t i = 0;
+        detail::fill_array_int<w>(first, last, state_);
+        index_ = state_size;
 
-        for ( ; i != state_size && first != last; ++i, ++first)
-            state_[i] = *first;
+        // fix up the state if it's all zeros.
+        if ((state_[0] & (~static_cast<UIntType>(0) << mask_bits)) == 0) {
+            for (std::size_t j = 1; j < state_size; ++j) {
+                if (state_[j] != 0)
+                    return;
+            }
 
-        if (first == last && i != state_size)
-            BOOST_THROW_EXCEPTION
-                (std::invalid_argument("Seed sequence too short"));
+            state_[0] = static_cast<UIntType>(1) << (w - 1);
+        }
     }
 
     /**
@@ -404,28 +449,33 @@ public:
      */
     result_type operator()()
     {
-        const UIntType upper_mask = ~0U << p;
-        const UIntType lower_mask = ~upper_mask;
+        BOOST_CONSTEXPR_OR_CONST UIntType upper_mask = ~0U << p;
+        BOOST_CONSTEXPR_OR_CONST UIntType lower_mask = ~upper_mask;
 
         // v[i,j] = state[(r-i+j) mod r]
-        std::size_t i = index_;
+        const std::size_t i = mod(index_);
+
         // Equivalent to r-i but allows to avoid negative values in the
         // following two expressions
-        std::size_t j = i + r;
-        std::size_t k = mod(j - 1); // [i,r-1]
-        std::size_t l = mod(j - 2); // [i,r-2]
+        const std::size_t j = i + r;
+        const std::size_t k = mod(j - 1); // [i,r-1]
+        const std::size_t l = mod(j - 2); // [i,r-2]
 
-        std::size_t im1 = i + m1;
-        std::size_t im2 = i + m2;
-        std::size_t im3 = i + m3;
+        const std::size_t im1 = mod(i + m1);
+        const std::size_t im2 = mod(i + m2);
+        const std::size_t im3 = mod(i + m3);
 
-        UIntType z0, z1, z2, z3, z4;
+        UIntType z0;
+        UIntType z1;
+        UIntType z2;
+        UIntType z3;
+        UIntType z4;
 
         z0 = (state_[k] & upper_mask) | (state_[l] & lower_mask);
         z1 = T0::transform(state_[i]) ^
-             T1::transform(state(im1));
-        z2 = T2::transform(state(im2)) ^
-             T3::transform(state(im3));
+             T1::transform(state_[im1]);
+        z2 = T2::transform(state_[im2]) ^
+             T3::transform(state_[im3]);
         z3 = z1 ^ z2;
         z4 = T4::transform(z0) ^ T5::transform(z1) ^
              T6::transform(z2) ^ T7::transform(z3);
@@ -435,22 +485,28 @@ public:
 
         index_ = k;
 
-        return Tempering::template apply<r>(z4, state_, im2);
+        return Tempering::template apply<UIntType, r>(z4, state_, im2);
     }
 
-    /** Returns the smallest value that the generator can produce. */
+    /**
+     * Returns the smallest value that the generator can produce.
+     */
     static result_type min BOOST_PREVENT_MACRO_SUBSTITUTION ()
     {
         return 0U;
     }
 
-    /** Returns the largest value that the generator can produce. */
+    /**
+     * Returns the largest value that the generator can produce.
+     */
     static result_type max BOOST_PREVENT_MACRO_SUBSTITUTION ()
     {
         return ~0U >> (std::numeric_limits<UIntType>::digits - w);
     }
 
-    /** Fills a range with random values */
+    /**
+     * Fills a range with random values.
+     */
     template<class InputIterator>
     void generate(InputIterator first, InputIterator last)
     {
@@ -500,7 +556,7 @@ public:
     friend std::basic_ostream<E, T>&
         operator<<(std::basic_ostream<E, T>& out, const well_engine& gen)
     {
-        E space = out.widen(' ');
+        const E space = out.widen(' ');
 
         for (std::size_t i = 0; i != state_size; ++i)
             out << gen.compute(i) << space;
@@ -530,11 +586,6 @@ private:
     static T mod(T value)
     {
         return detail::selective_modulo<T, r>::compute(value);
-    }
-
-    UIntType state(std::size_t index) const
-    {
-        return state_[mod(index)];
     }
 
     UIntType compute(std::size_t index) const
@@ -571,6 +622,11 @@ template<class UIntType, std::size_t w, std::size_t r, std::size_t p,
     class T2, class T3, class T4, class T5, class T6, class T7, class Tempering>
 const UIntType well_engine<UIntType, w, r, p, m1, m2, m3, T0, T1, T2, T3, T4, T5, T6,
       T7, Tempering>::default_seed;
+template<class UIntType, std::size_t w, std::size_t r, std::size_t p,
+    std::size_t m1, std::size_t m2, std::size_t m3, class T0, class T1,
+    class T2, class T3, class T4, class T5, class T6, class T7, class Tempering>
+const bool well_engine<UIntType, w, r, p, m1, m2, m3, T0, T1, T2, T3, T4, T5, T6,
+      T7, Tempering>::has_fixed_range;
 #endif // BOOST_NO_INCLASS_MEMBER_INITIALIZATION
 
 //! @endcond
@@ -720,21 +776,21 @@ typedef mpl::apply1<detail::well44497a_base,
  */
 
 typedef mpl::apply1<detail::well800a_base,
-    detail::harase_tempering<0x4880U> >::type well800a_maxequist;
+    detail::harase_tempering<0x4880U> >::type maxeqdist_well800a;
 typedef mpl::apply1<detail::well800b_base,
-    detail::harase_tempering<0x17030806U> >::type well800b_maxequist;
+    detail::harase_tempering<0x17030806U> >::type maxeqdist_well800b;
 typedef mpl::apply1<detail::well19937a_base,
-    detail::harase_tempering<0x4118000U> >::type well19937a_maxequist;
+    detail::harase_tempering<0x4118000U> >::type maxeqdist_well19937a;
 typedef mpl::apply1<detail::well19937b_base,
-    detail::harase_tempering<0x30200010U> >::type well19937b_maxequist;
+    detail::harase_tempering<0x30200010U> >::type maxeqdist_well19937b;
 typedef mpl::apply1<detail::well21701a_base,
-    detail::harase_tempering<0x1002U> >::type well21701a_maxequist;
+    detail::harase_tempering<0x1002U> >::type maxeqdist_well21701a;
 typedef mpl::apply1<detail::well23209a_base,
-    detail::harase_tempering<0x5100000U> >::type well23209a_maxequist;
+    detail::harase_tempering<0x5100000U> >::type maxeqdist_well23209a;
 typedef mpl::apply1<detail::well23209b_base,
-    detail::harase_tempering<0x34000300U> >::type well23209b_maxequist;
+    detail::harase_tempering<0x34000300U> >::type maxeqdist_well23209b;
 typedef mpl::apply1<detail::well44497a_base,
-    detail::harase_tempering<0x48000000U> >::type well44497a_maxequist;
+    detail::harase_tempering<0x48000000U> >::type maxeqdist_well44497a;
 
 //! @}
 
