@@ -13,7 +13,7 @@ target_include_directories (test_well PUBLIC
   $<BUILD_INTERFACE:${Random_SOURCE_DIR}>
 )
 
-target_link_libraries (test_well ${Boost_LIBRARIES})
+target_link_libraries (test_well PRIVATE Boost::unit_test_framework)
 
 add_test (WELL512a test_well -t WELL512a)
 add_test (WELL521a test_well -t WELL521a)
