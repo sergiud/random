@@ -490,7 +490,9 @@ public:
 
         index_ = k;
 
-        return Tempering::template apply<UIntType, r>(z4, state_, im2);
+        const std::size_t km2 = mod(k + m2);
+
+        return Tempering::template apply<UIntType, r>(z4, state_, km2);
     }
 
     /**
@@ -599,7 +601,7 @@ private:
 
     UIntType compute(std::size_t index) const
     {
-        return state_[mod(index_ + index + r)];
+        return state_[mod(index_ + mod(index + r))];
     }
 
     UIntType state_[r];
@@ -801,7 +803,7 @@ typedef mpl::apply1<detail::well800a_base,
 typedef mpl::apply1<detail::well800b_base,
     detail::harase_tempering<0x17030806U> >::type maxeqdist_well800b;
 typedef mpl::apply1<detail::well19937a_base,
-    detail::harase_tempering<0x4118000U> >::type maxeqdist_well19937a;
+    detail::harase_tempering<0x41180000U> >::type maxeqdist_well19937a;
 typedef mpl::apply1<detail::well19937b_base,
     detail::harase_tempering<0x30200010U> >::type maxeqdist_well19937b;
 typedef mpl::apply1<detail::well21701a_base,
