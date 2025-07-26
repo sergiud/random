@@ -49,7 +49,7 @@ class WellTestCase
 
         result_type x;
 
-        int iterations = 1000000000;
+        unsigned iterations = 1000000000;
 
         while (iterations-- > 0) {
             x = rng();
