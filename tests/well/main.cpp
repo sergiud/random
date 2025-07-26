@@ -1,4 +1,4 @@
-// Copyright (c) Sergiu Dotenco 2010
+// Copyright (c) Sergiu Deitsch 2025
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -7,8 +7,6 @@
  * @brief WELL PRNG implementation unit test.
  * @file welltest.cpp
  */
-
-#include <algorithm>
 
 #define BOOST_TEST_MODULE WELL
 
@@ -53,8 +51,9 @@ class WellTestCase
 
         int iterations = 1000000000;
 
-        while (iterations-- > 0)
+        while (iterations-- > 0) {
             x = rng();
+        }
 
         return x;
     }

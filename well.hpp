@@ -1,6 +1,6 @@
 // boost random/well.hpp header file
 //
-// Copyright (c) Sergiu Dotenco 2010-2012, 2014
+// Copyright (c) Sergiu Deitsch 2025
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -123,8 +123,9 @@ struct M4
     {
         T result = x >> 1;
 
-        if ((x & 1) == 1)
+        if ((x & 1) == 1) {
             result ^= a;
+        }
 
         return result;
     }
@@ -158,8 +159,9 @@ struct M6
 
         T result = ((x << q) ^ (x >> (w - q))) & ds;
 
-        if (((x >> (w - (t + 1))) & 1) == 1)
+        if (((x >> (w - (t + 1))) & 1) == 1) {
             result ^= a;
+        }
 
         return result;
     }
@@ -212,8 +214,9 @@ struct generic_modulo
     {
         BOOST_ASSERT_MSG(value < 2 * r, "value out of range");
 
-        if (value >= r)
+        if (value >= r) {
             value -= r;
+        }
 
         return value;
     }
@@ -383,8 +386,9 @@ public:
         // fix up the state if it's all zeros.
         if ((state_[0] & (~static_cast<UIntType>(0) << mask_bits)) == 0) {
             for (std::size_t j = 1; j != state_size; ++j) {
-                if (state_[j] != 0)
+                if (state_[j] != 0) {
                     return;
+                }
             }
 
             state_[0] = static_cast<UIntType>(1) << (w - 1);
@@ -392,21 +396,21 @@ public:
     }
 
     /**
-    * Sets the state x(0) to v mod 2w. Then, iteratively,
-    * sets x(i) to
-    * (i + f * (x(i-1) xor (x(i-1) rshift w-2))) mod 2<sup>w</sup>
-    * for i = 1 .. n-1. x(n) is the first value to be returned by operator().
-    */
+     * Sets the state x(0) to v mod 2w. Then, iteratively,
+     * sets x(i) to
+     * (i + f * (x(i-1) xor (x(i-1) rshift w-2))) mod 2<sup>w</sup>
+     * for i = 1 .. n-1. x(n) is the first value to be returned by operator().
+     */
     BOOST_RANDOM_DETAIL_ARITHMETIC_SEED(well_engine, UIntType, value)
     {
-        // New seeding algorithm from 
+        // New seeding algorithm from
         // http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/MT2002/emt19937ar.html
         // In the previous versions, MSBs of the seed affected only MSBs of the
         // state x[].
         const UIntType mask = (max)();
 
         state_[0] = value & mask;
-        
+
         std::size_t i = 1;
         UIntType (&s)[state_size] = state_;
 
@@ -436,8 +440,9 @@ public:
         // fix up the state if it's all zeros.
         if ((state_[0] & (~static_cast<UIntType>(0) << mask_bits)) == 0) {
             for (std::size_t j = 1; j < state_size; ++j) {
-                if (state_[j] != 0)
+                if (state_[j] != 0) {
                     return;
+                }
             }
 
             state_[0] = static_cast<UIntType>(1) << (w - 1);
@@ -514,14 +519,14 @@ public:
     }
 
     /**
-    * Advances the state of the generator by @c z steps.  Equivalent to
-    *
-    * @code
-    * for(unsigned long long i = 0; i < z; ++i) {
-    *     gen();
-    * }
-    * @endcode
-    */
+     * Advances the state of the generator by @c z steps.  Equivalent to
+     *
+     * @code
+     * for(unsigned long long i = 0; i < z; ++i) {
+     *     gen();
+     * }
+     * @endcode
+     */
     void discard(uintmax_t z)
     {
         while (z-- > 0) {
@@ -534,9 +539,11 @@ public:
      */
     friend bool operator==(const well_engine& lhs, const well_engine& rhs)
     {
-        for (std::size_t i = 0; i != state_size; ++i)
-            if (lhs.compute(i) != rhs.compute(i))
+        for (std::size_t i = 0; i != state_size; ++i) {
+            if (lhs.compute(i) != rhs.compute(i)) {
                 return false;
+            }
+        }
 
         return true;
     }
@@ -558,8 +565,9 @@ public:
     {
         const E space = out.widen(' ');
 
-        for (std::size_t i = 0; i != state_size; ++i)
+        for (std::size_t i = 0; i != state_size; ++i) {
             out << gen.compute(i) << space;
+        }
 
         return out;
     }
@@ -571,8 +579,9 @@ public:
     friend std::basic_istream<E, T>&
         operator>>(std::basic_istream<E, T>& in, well_engine& gen)
     {
-        for (std::size_t i = 0; i != state_size; ++i)
+        for (std::size_t i = 0; i != state_size; ++i) {
             in >> gen.state_[i] >> std::ws;
+        }
 
         gen.index_ = state_size;
 
