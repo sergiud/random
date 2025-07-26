@@ -247,7 +247,7 @@ template<uint_least32_t b, uint_least32_t c>
 struct matsumoto_kurita_tempering
 {
     template<class UIntType, std::size_t r, std::size_t N>
-    static UIntType apply(UIntType x, UIntType (&)[N], std::size_t)
+    static UIntType apply(UIntType x, const UIntType (&)[N], std::size_t)
     {
         x ^= (x << 7) & b;
         x ^= (x << 15) & c;
@@ -260,7 +260,7 @@ template<uint_least32_t mask>
 struct harase_tempering
 {
     template<class UIntType, std::size_t r, std::size_t N>
-    static UIntType apply(UIntType x, UIntType (&s)[N], std::size_t m2)
+    static UIntType apply(UIntType x, const UIntType (&s)[N], std::size_t m2)
     {
         return x ^ (s[selective_modulo<std::size_t, r>::compute(m2 + 1)] & mask);
     }
@@ -269,7 +269,7 @@ struct harase_tempering
 struct no_tempering
 {
     template<class UIntType, std::size_t r, std::size_t N>
-    static UIntType apply(UIntType x, UIntType (&)[N], std::size_t)
+    static UIntType apply(UIntType x, const UIntType (&)[N], std::size_t)
     {
         return x;
     }
