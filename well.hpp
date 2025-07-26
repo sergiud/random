@@ -363,21 +363,21 @@ public:
     }
 
     /**
-    * Constructs a well_engine and calls @c seed(gen).
-    *
-    * @xmlnote
-    * The copy constructor will always be preferred over
-    * the templated constructor.
-    * @endxmlnote
-    */
+     * Constructs a well_engine and calls @c seed(gen).
+     *
+     * @xmlnote
+     * The copy constructor will always be preferred over
+     * the templated constructor.
+     * @endxmlnote
+     */
     BOOST_RANDOM_DETAIL_SEED_SEQ_CONSTRUCTOR(well_engine, SeedSeq, seq)
     {
         seed(seq);
     }
 
     /**
-    * Seeds a well_engine using values produced by seq.generate().
-    */
+     * Seeds a well_engine using values produced by seq.generate().
+     */
     BOOST_RANDOM_DETAIL_SEED_SEQ_SEED(well_engine, SeedSeq, seq)
     {
         detail::seed_array_int<w>(seq, state_);
