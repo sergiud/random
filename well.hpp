@@ -280,8 +280,8 @@ struct no_tempering
 //! @endcond
 
 /**
- * @brief well_engine Equidistributed Long-period Linear (WELL) pseudo-random
- * number generator.
+ * @brief Equidistributed Long-period Linear (WELL) pseudo-random number
+ * generator.
  *
  * The implementation is based on the "Improved Long-Period Generators Based on
  * Linear Recurrences selective_modulo 2" paper by Francois Panneton, Pierre
@@ -330,18 +330,25 @@ public:
     //! The unsigned integer type.
     typedef UIntType result_type;
 
+#ifdef DOXYGEN
     //! Word size.
-    BOOST_STATIC_CONSTANT(std::size_t, word_size = w);
+    static const std::size_t word_size = w;
     //! State size.
-    BOOST_STATIC_CONSTANT(std::size_t, state_size = r);
+    static const std::size_t state_size = r;
     //! Number of mask bits.
-    BOOST_STATIC_CONSTANT(std::size_t, mask_bits = p);
+    static const std::size_t mask_bits = p;
     //! Default seed value.
+    static const UIntType default_seed = 5489U;
+#else
+    BOOST_STATIC_CONSTANT(std::size_t, word_size = w);
+    BOOST_STATIC_CONSTANT(std::size_t, state_size = r);
+    BOOST_STATIC_CONSTANT(std::size_t, mask_bits = p);
     BOOST_STATIC_CONSTANT(UIntType, default_seed = 5489U);
     BOOST_STATIC_CONSTANT(bool, has_fixed_range = false);
+#endif
 
     /**
-     * Constructs a @c mersenne_twister_engine and calls @c seed().
+     * @brief Constructs a @ref well_engine and calls @ref seed().
      */
     well_engine()
     {
@@ -349,9 +356,13 @@ public:
     }
 
     /**
-     * Constructs a @c mersenne_twister_engine and calls @c seed(value).
+     * @brief Constructs a @ref well_engine and calls @ref seed(UIntType).
      */
+#if defined(DOXYGEN)
+    explicit well_engine(UIntType value)
+#else
     BOOST_RANDOM_DETAIL_ARITHMETIC_CONSTRUCTOR(well_engine, UIntType, value)
+#endif
     {
         seed(value);
     }
@@ -363,22 +374,30 @@ public:
     }
 
     /**
-     * Constructs a well_engine and calls @c seed(gen).
+     * @brief Constructs a well_engine and calls @ref well_engine::seed(SeedSeq&).
      *
-     * @xmlnote
-     * The copy constructor will always be preferred over
-     * the templated constructor.
-     * @endxmlnote
+     * @note The copy constructor will always be preferred over the templated
+     * constructor.
      */
+#if defined(DOXYGEN)
+    template<class SeedSeq>
+    explicit well_engine(SeedSeq& seq)
+#else
     BOOST_RANDOM_DETAIL_SEED_SEQ_CONSTRUCTOR(well_engine, SeedSeq, seq)
+#endif
     {
         seed(seq);
     }
 
     /**
-     * Seeds a well_engine using values produced by seq.generate().
+     * @brief Seeds a well_engine using values produced by seq.generate().
      */
+#if defined(DOXYGEN)
+    template<class SeedSeq>
+    void seed(SeedSeq& seq)
+#else
     BOOST_RANDOM_DETAIL_SEED_SEQ_SEED(well_engine, SeedSeq, seq)
+#endif
     {
         detail::seed_array_int<w>(seq, state_);
         index_ = state_size;
@@ -396,12 +415,15 @@ public:
     }
 
     /**
-     * Sets the state x(0) to v mod 2w. Then, iteratively,
-     * sets x(i) to
+     * @brief Sets the state x(0) to v mod 2w. Then, iteratively, sets x(i) to
      * (i + f * (x(i-1) xor (x(i-1) rshift w-2))) mod 2<sup>w</sup>
-     * for i = 1 .. n-1. x(n) is the first value to be returned by operator().
+     * for i = 1 .. n-1. x(n) is the first value to be returned by @ref well_engine::operator()().
      */
+#if defined(DOXYGEN)
+    void seed(UIntType value)
+#else
     BOOST_RANDOM_DETAIL_ARITHMETIC_SEED(well_engine, UIntType, value)
+#endif
     {
         // New seeding algorithm from
         // http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/MT2002/emt19937ar.html
@@ -424,7 +446,8 @@ public:
     }
 
     /**
-     * Calls @c seed(default_seed).
+     * @brief Calls @ref well_engine::seed(UIntType) using
+     * well_engine::default_seed.
      */
     void seed()
     {
@@ -496,7 +519,7 @@ public:
     }
 
     /**
-     * Returns the smallest value that the generator can produce.
+     * @brief Returns the smallest value that the generator can produce.
      */
     static BOOST_CONSTEXPR result_type min BOOST_PREVENT_MACRO_SUBSTITUTION ()
     {
@@ -504,7 +527,7 @@ public:
     }
 
     /**
-     * Returns the largest value that the generator can produce.
+     * @brief Returns the largest value that the generator can produce.
      */
     static BOOST_CONSTEXPR result_type max BOOST_PREVENT_MACRO_SUBSTITUTION ()
     {
@@ -512,7 +535,7 @@ public:
     }
 
     /**
-     * Fills a range with random values.
+     * @brief Fills a range with random values.
      */
     template<class InputIterator>
     void generate(InputIterator first, InputIterator last)
@@ -521,10 +544,10 @@ public:
     }
 
     /**
-     * Advances the state of the generator by @c z steps.  Equivalent to
+     * @brief Advances the state of the generator by @a z steps. Equivalent to
      *
      * @code
-     * for(unsigned long long i = 0; i < z; ++i) {
+     * for (unsigned long long i = 0; i < z; ++i) {
      *     gen();
      * }
      * @endcode
