@@ -284,9 +284,9 @@ struct no_tempering
  * generator.
  *
  * The implementation is based on the "Improved Long-Period Generators Based on
- * Linear Recurrences selective_modulo 2" paper by Francois Panneton, Pierre
- * L'Ecuyer and Makoto Matsumoto from ACM Transactions on Mathematical Software,
- * 32 (1, March) 2006, pp. 1-16.
+ * Linear Recurrences Modulo 2" paper by Francois Panneton, Pierre L'Ecuyer and
+ * Makoto Matsumoto from ACM Transactions on Mathematical Software, 32 (1,
+ * March) 2006, pp. 1-16.
  *
  * @tparam UIntType The unsigned integer type.
  * @tparam w Word size.
